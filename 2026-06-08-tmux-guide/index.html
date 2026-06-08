@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tmux 設定指南</title>
+  <style>
+    :root {
+      --bg:       #1e1e2e;
+      --surface:  #181825;
+      --overlay:  #313244;
+      --muted:    #45475a;
+      --text:     #cdd6f4;
+      --subtext:  #a6adc8;
+      --lavender: #b4befe;
+      --blue:     #89b4fa;
+      --sapphire: #74c7ec;
+      --sky:      #89dceb;
+      --teal:     #94e2d5;
+      --green:    #a6e3a1;
+      --yellow:   #f9e2af;
+      --peach:    #fab387;
+      --pink:     #f38ba8;
+      --mauve:    #cba6f7;
+      --red:      #f38ba8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    nav {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--overlay);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 0;
+    }
+
+    nav .logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--overlay);
+      margin-bottom: 16px;
+    }
+    nav .logo h1 { font-size: 16px; color: var(--mauve); letter-spacing: .05em; }
+    nav .logo p  { font-size: 11px; color: var(--subtext); margin-top: 4px; }
+
+    nav ul { list-style: none; }
+    nav ul li a {
+      display: block;
+      padding: 7px 20px;
+      color: var(--subtext);
+      text-decoration: none;
+      font-size: 12px;
+      transition: color .15s, background .15s;
+      border-left: 3px solid transparent;
+    }
+    nav ul li a:hover {
+      color: var(--text);
+      background: var(--overlay);
+      border-left-color: var(--mauve);
+    }
+    nav ul li.section {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      padding: 14px 20px 4px;
+    }
+
+    main {
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 960px;
+    }
+
+    /* ── Typography ── */
+    h2 {
+      font-size: 22px;
+      color: var(--mauve);
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--overlay);
+    }
+    h3 {
+      font-size: 15px;
+      color: var(--lavender);
+      margin: 28px 0 12px;
+    }
+    p { color: var(--subtext); margin-bottom: 12px; }
+
+    section { margin-bottom: 56px; }
+
+    /* ── Code blocks ── */
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--overlay);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    code { color: var(--green); }
+    pre code { color: var(--text); }
+
+    .comment { color: var(--muted); font-style: italic; }
+    .key-word { color: var(--blue); }
+    .value { color: var(--peach); }
+    .string { color: var(--green); }
+    .option { color: var(--yellow); }
+
+    /* ── Inline code ── */
+    p code, li code, td code {
+      background: var(--overlay);
+      color: var(--sky);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12.5px;
+    }
+
+    /* ── Key badges ── */
+    .key {
+      display: inline-block;
+      background: var(--overlay);
+      color: var(--yellow);
+      border: 1px solid var(--muted);
+      border-radius: 5px;
+      padding: 1px 8px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .key + .key { margin-left: 2px; }
+    .prefix { color: var(--mauve); }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 13px;
+    }
+    thead th {
+      background: var(--overlay);
+      color: var(--lavender);
+      text-align: left;
+      padding: 8px 14px;
+      font-weight: 600;
+    }
+    tbody tr:nth-child(even) { background: #1f1f2e; }
+    tbody td {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--overlay);
+      color: var(--subtext);
+      vertical-align: top;
+    }
+    tbody td:first-child { color: var(--text); white-space: nowrap; }
+
+    /* ── Plugin cards ── */
+    .plugin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .plugin-card {
+      background: var(--surface);
+      border: 1px solid var(--overlay);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .plugin-card .plugin-name {
+      color: var(--blue);
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .plugin-card .plugin-repo {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+    .plugin-card p {
+      font-size: 12px;
+      color: var(--subtext);
+      margin: 0;
+    }
+
+    /* ── Effect chips ── */
+    .effect {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin: 2px 2px 2px 0;
+    }
+    .effect.green  { background: #2a3d2a; color: var(--green); border: 1px solid #3a5a3a; }
+    .effect.blue   { background: #1e2d3a; color: var(--blue);  border: 1px solid #2a4a5a; }
+    .effect.yellow { background: #3a3020; color: var(--yellow);border: 1px solid #5a4a20; }
+    .effect.pink   { background: #3a2030; color: var(--pink);  border: 1px solid #5a2040; }
+    .effect.mauve  { background: #2d2040; color: var(--mauve); border: 1px solid #4a3060; }
+
+    /* ── Status bar preview ── */
+    .statusbar-preview {
+      background: #11111b;
+      border: 1px solid var(--overlay);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .statusbar-preview .bar {
+      display: flex;
+      align-items: center;
+      height: 32px;
+      padding: 0;
+      font-size: 13px;
+    }
+    .sb-session {
+      background: var(--mauve);
+      color: #1e1e2e;
+      padding: 0 14px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+    }
+    .sb-win {
+      background: var(--overlay);
+      color: var(--subtext);
+      padding: 0 14px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sb-win.active {
+      background: var(--blue);
+      color: #1e1e2e;
+      font-weight: bold;
+    }
+    .sb-spacer { flex: 1; }
+    .sb-dir {
+      background: var(--overlay);
+      color: var(--text);
+      padding: 0 14px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+    .sb-zoom { font-size: 10px; color: var(--yellow); margin-left: 4px; }
+
+    /* ── Callout ── */
+    .callout {
+      display: flex;
+      gap: 12px;
+      background: #1e2d3a;
+      border: 1px solid var(--sapphire);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .callout .icon { font-size: 18px; flex-shrink: 0; }
+    .callout.warn {
+      background: #3a2e1e;
+      border-color: var(--yellow);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--overlay); border-radius: 3px; }
+
+    /* ── Anki Flip Cards ── */
+    .anki-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .anki-card {
+      perspective: 1000px;
+      height: 148px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .anki-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.42s cubic-bezier(.4,0,.2,1);
+      transform-style: preserve-3d;
+    }
+    .anki-card.flipped .anki-inner { transform: rotateY(180deg); }
+    .anki-front, .anki-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+    .anki-front {
+      background: var(--surface);
+      border: 1px solid var(--overlay);
+    }
+    .anki-back {
+      background: #1a1d2e;
+      border: 1px solid var(--blue);
+      transform: rotateY(180deg);
+    }
+    .anki-cat-badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+    .anki-question { font-size: 13px; color: var(--text); font-weight: 500; }
+    .anki-tap { font-size: 10px; color: var(--muted); }
+    .anki-answer { font-size: 15px; color: var(--yellow); font-weight: bold; letter-spacing: .03em; }
+    .anki-desc { font-size: 11px; color: var(--subtext); }
+
+    .category-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 20px;
+    }
+    .cat-btn {
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--overlay);
+      background: var(--surface);
+      color: var(--subtext);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all .15s;
+    }
+    .cat-btn:hover { background: var(--overlay); color: var(--text); }
+    .cat-btn.active { background: var(--overlay); color: var(--mauve); border-color: var(--mauve); }
+
+    /* ── Export UI ── */
+    .anki-export-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0 18px;
+    }
+    .export-btn {
+      padding: 6px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--sapphire);
+      background: transparent;
+      color: var(--sapphire);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .export-btn:hover { background: var(--sapphire); color: #1e1e2e; }
+    .export-hint { font-size: 11px; color: var(--muted); }
+    #export-area { margin-bottom: 20px; }
+    .export-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    #copy-msg { font-size: 12px; color: var(--green); display: none; }
+    #export-text {
+      width: 100%;
+      height: 240px;
+      background: var(--surface);
+      border: 1px solid var(--overlay);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      padding: 14px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <nav>
+    <div class="logo">
+      <h1>Tmux 設定指南</h1>
+      <p>Jason's Dotfiles</p>
+    </div>
+    <ul>
+      <li class="section">開始</li>
+      <li><a href="#install">安裝 &amp; 初始化</a></li>
+      <li><a href="#structure">設定檔結構</a></li>
+
+      <li class="section">核心設定</li>
+      <li><a href="#core">基本選項</a></li>
+      <li><a href="#prefix">Prefix 鍵</a></li>
+      <li><a href="#terminal">終端機設定</a></li>
+      <li><a href="#pane-border">Pane 邊框</a></li>
+
+      <li class="section">快捷鍵</li>
+      <li><a href="#keybind-session">Session 管理</a></li>
+      <li><a href="#keybind-window">Window 管理</a></li>
+      <li><a href="#keybind-pane">Pane 管理</a></li>
+      <li><a href="#keybind-nav">Pane 導覽</a></li>
+      <li><a href="#keybind-resize">Pane 調整大小</a></li>
+      <li><a href="#keybind-copy">Copy Mode</a></li>
+
+      <li class="section">插件</li>
+      <li><a href="#plugins-list">插件清單</a></li>
+      <li><a href="#plugin-floax">tmux-floax</a></li>
+      <li><a href="#plugin-sessionx">tmux-sessionx</a></li>
+      <li><a href="#plugin-resurrect">resurrect + continuum</a></li>
+      <li><a href="#plugin-catppuccin">catppuccin 主題</a></li>
+      <li><a href="#plugin-fzf-url">tmux-fzf-url</a></li>
+      <li><a href="#plugin-thumbs">tmux-thumbs</a></li>
+      <li><a href="#plugin-fzf">tmux-fzf</a></li>
+
+      <li class="section">進階</li>
+      <li><a href="#statusbar">Status Bar 外觀</a></li>
+      <li><a href="#cal-script">Calendar 腳本</a></li>
+
+      <li class="section">學習</li>
+      <li><a href="#anki">Anki 記憶卡</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <main>
+
+    <!-- Install -->
+    <section id="install">
+      <h2>安裝 &amp; 初始化</h2>
+      <p>這份設定使用 <strong>TPM（Tmux Plugin Manager）</strong> 管理所有插件。在套用設定前需要先安裝 TPM。</p>
+
+      <h3>步驟 1 — 安裝 TPM</h3>
+      <pre><code>git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm</code></pre>
+
+      <h3>步驟 2 — 套用 dotfiles（personal）</h3>
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div>此 repo（oss/dotfiles）為版本控制參考用，<strong>不要直接 stow 此目錄</strong>。本機設定在 <code>~/code/personal/dotfiles</code>，執行以下指令套用：
+        <pre style="margin-top:8px"><code>cd ~/code/personal/dotfiles && ./setup.sh</code></pre>
+        </div>
+      </div>
+
+      <h3>步驟 3 — 安裝所有插件</h3>
+      <p>啟動 tmux 後，按下：</p>
+      <p><span class="key prefix">Ctrl+A</span> 然後 <span class="key">I</span>（大寫）</p>
+      <p>TPM 會自動下載並安裝所有在 <code>tmux.conf</code> 中宣告的插件。</p>
+
+      <h3>步驟 4 — 重新載入設定</h3>
+      <pre><code>tmux source-file ~/.config/tmux/tmux.conf</code></pre>
+      <p>或在 tmux 內按：<span class="key prefix">Ctrl+A</span> <span class="key">R</span></p>
+    </section>
+
+    <!-- Structure -->
+    <section id="structure">
+      <h2>設定檔結構</h2>
+      <pre><code>~/.config/tmux/
+├── tmux.conf          <span class="comment"># 主設定檔（插件、主題、選項）</span>
+├── tmux.reset.conf    <span class="comment"># 自訂快捷鍵（由 tmux.conf source）</span>
+└── scripts/
+    └── cal.sh         <span class="comment"># 行事曆整合腳本（目前已停用）</span></code></pre>
+
+      <p><code>tmux.conf</code> 第一行即 <code>source-file ~/.config/tmux/tmux.reset.conf</code>，確保自訂按鍵優先載入，再由插件補充。</p>
+    </section>
+
+    <!-- Core Options -->
+    <section id="core">
+      <h2>基本選項</h2>
+
+      <table>
+        <thead>
+          <tr><th>設定</th><th>值</th><th>效果</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>base-index</code></td>
+            <td><code>1</code></td>
+            <td>視窗從 1 開始編號，符合鍵盤左起習慣</td>
+          </tr>
+          <tr>
+            <td><code>detach-on-destroy</code></td>
+            <td><code>off</code></td>
+            <td>關閉 session 時不退出 tmux，自動切換到其他 session</td>
+          </tr>
+          <tr>
+            <td><code>escape-time</code></td>
+            <td><code>0</code></td>
+            <td>消除 Esc 鍵延遲，Neovim 等編輯器反應更快</td>
+          </tr>
+          <tr>
+            <td><code>history-limit</code></td>
+            <td><code>1,000,000</code></td>
+            <td>每個 pane 保留 100 萬行歷史，可往上滾動超長輸出</td>
+          </tr>
+          <tr>
+            <td><code>renumber-windows</code></td>
+            <td><code>on</code></td>
+            <td>關閉視窗後自動重新編號，保持連續</td>
+          </tr>
+          <tr>
+            <td><code>set-clipboard</code></td>
+            <td><code>on</code></td>
+            <td>複製時同步到系統剪貼簿</td>
+          </tr>
+          <tr>
+            <td><code>status-position</code></td>
+            <td><code>top</code></td>
+            <td>Status bar 顯示在上方（macOS 風格）</td>
+          </tr>
+          <tr>
+            <td><code>mode-keys</code></td>
+            <td><code>vi</code></td>
+            <td>Copy mode 使用 Vim 按鍵（<code>j/k</code> 移動、<code>v</code> 選取）</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Prefix -->
+    <section id="prefix">
+      <h2>Prefix 鍵</h2>
+      <p>tmux 的所有操作都需要先按 <strong>Prefix</strong> 再按指令鍵。</p>
+
+      <pre><code><span class="key-word">set</span> <span class="option">-g</span> prefix <span class="value">^A</span>   <span class="comment"># 改為 Ctrl+A（預設是 Ctrl+B）</span></code></pre>
+
+      <div class="callout">
+        <span class="icon">💡</span>
+        <div><strong>為什麼用 Ctrl+A？</strong><br>
+        <code>Ctrl+A</code> 是 GNU Screen 的傳統 prefix，小指不用跨越到 <code>B</code>，且與許多開發者的肌肉記憶一致。</div>
+      </div>
+
+      <table>
+        <thead><tr><th>狀況</th><th>按法</th></tr></thead>
+        <tbody>
+          <tr><td>執行 tmux 指令</td><td><span class="key prefix">Ctrl+A</span> 放開 → 按指令鍵</td></tr>
+          <tr><td>在 Vim 中使用 Ctrl+A（數字遞增）</td><td>按兩次 <span class="key prefix">Ctrl+A</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Terminal -->
+    <section id="terminal">
+      <h2>終端機設定</h2>
+      <pre><code><span class="key-word">set-option</span> <span class="option">-g</span> default-terminal <span class="string">'screen-256color'</span>
+<span class="key-word">set-option</span> <span class="option">-g</span> terminal-overrides <span class="string">',xterm-256color:RGB'</span>
+<span class="key-word">set</span> <span class="option">-g</span> default-terminal <span class="string">"${TERM}"</span></code></pre>
+
+      <table>
+        <thead><tr><th>效果</th></tr></thead>
+        <tbody>
+          <tr><td>支援 24-bit 真彩色（Neovim 主題色彩正確顯示）</td></tr>
+          <tr><td>繼承外部終端機（Ghostty）的 TERM 變數</td></tr>
+          <tr><td>確保 256 色相容性</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Pane Border -->
+    <section id="pane-border">
+      <h2>Pane 邊框</h2>
+      <pre><code><span class="key-word">set</span> <span class="option">-g</span> pane-active-border-style <span class="string">'fg=magenta,bg=default'</span>
+<span class="key-word">set</span> <span class="option">-g</span> pane-border-style        <span class="string">'fg=brightblack,bg=default'</span></code></pre>
+
+      <table>
+        <thead><tr><th>邊框</th><th>顏色</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>目前聚焦的 pane</td><td><span style="color:var(--mauve)">■</span> Magenta（紫紅）</td><td>清楚識別目前操作的 pane</td></tr>
+          <tr><td>未聚焦的 pane</td><td><span style="color:var(--muted)">■</span> Bright Black（深灰）</td><td>低調，不搶視覺焦點</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Keybinds: Session -->
+    <section id="keybind-session">
+      <h2>快捷鍵 — Session 管理</h2>
+      <p>所有快捷鍵均需先按 <span class="key prefix">Ctrl+A</span> 作為 Prefix。</p>
+
+      <table>
+        <thead><tr><th>按鍵</th><th>指令</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">^D</span></td>
+            <td><code>detach</code></td>
+            <td>離開 tmux 回到 shell（session 在背景繼續運行）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">S</span></td>
+            <td><code>choose-session</code></td>
+            <td>開啟 session 選擇清單</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">o</span></td>
+            <td>tmux-sessionx</td>
+            <td>開啟 fzf session 管理器（可建立/切換/預覽）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">$</span></td>
+            <td><code>rename-session</code></td>
+            <td>重新命名目前 session</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">:</span> → <code>kill-session</code></td>
+            <td><code>kill-session</code></td>
+            <td>關閉目前 session（無獨立快捷鍵，需透過 command mode 輸入）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">^X</span></td>
+            <td><code>lock-server</code></td>
+            <td>鎖定 tmux server</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">*</span></td>
+            <td><code>list-clients</code></td>
+            <td>列出所有連線的 client</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Keybinds: Window -->
+    <section id="keybind-window">
+      <h2>快捷鍵 — Window 管理</h2>
+
+      <table>
+        <thead><tr><th>按鍵</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">^C</span></td>
+            <td>在 <code>$HOME</code> 開新視窗</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">H</span></td>
+            <td>切換到上一個視窗（previous-window）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">L</span></td>
+            <td>切換到下一個視窗（next-window）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">^A</span></td>
+            <td>切換到上次使用的視窗（last-window）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">^W</span> 或 <span class="key">w</span></td>
+            <td>列出所有視窗</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">"</span></td>
+            <td>choose-window 選擇器</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">r</span></td>
+            <td>重新命名目前視窗</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">R</span></td>
+            <td>重新載入 tmux.conf</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Keybinds: Pane -->
+    <section id="keybind-pane">
+      <h2>快捷鍵 — Pane 管理</h2>
+
+      <table>
+        <thead><tr><th>按鍵</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">s</span></td>
+            <td>水平分割（向下），繼承目前路徑</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">v</span></td>
+            <td>垂直分割（向右），繼承目前路徑</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">|</span></td>
+            <td>垂直分割（預設路徑）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">c</span></td>
+            <td>關閉目前 pane（kill-pane）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">x</span></td>
+            <td>與下一個 pane 交換位置（swap-pane -D）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">z</span></td>
+            <td>Zoom / 全螢幕切換目前 pane</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">P</span></td>
+            <td>切換 pane border status（顯示/隱藏邊框標題）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">p</span></td>
+            <td>開啟 tmux-floax 浮動 pane</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">K</span></td>
+            <td>清空目前 pane（傳送 <code>clear + Enter</code>）</td>
+          </tr>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">*</span>（pane）</td>
+            <td>切換 synchronize-panes（同步輸入到所有 pane）</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Keybinds: Navigation -->
+    <section id="keybind-nav">
+      <h2>快捷鍵 — Pane 導覽</h2>
+      <p>使用 Vim 方向鍵在 pane 之間移動：</p>
+
+      <table>
+        <thead><tr><th>按鍵</th><th>移動方向</th></tr></thead>
+        <tbody>
+          <tr><td><span class="key prefix">^A</span> <span class="key">h</span></td><td>← 左</td></tr>
+          <tr><td><span class="key prefix">^A</span> <span class="key">j</span></td><td>↓ 下</td></tr>
+          <tr><td><span class="key prefix">^A</span> <span class="key">k</span></td><td>↑ 上</td></tr>
+          <tr><td><span class="key prefix">^A</span> <span class="key">l</span></td><td>→ 右（同 refresh-client）</td></tr>
+        </tbody>
+      </table>
+
+      <p>另外：</p>
+      <table>
+        <thead><tr><th>按鍵</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr><td><span class="key prefix">^A</span> <span class="key">^L</span> 或 <span class="key">l</span></td><td>重新整理 client 畫面</td></tr>
+          <tr><td><span class="key prefix">^A</span> <span class="key">:</span></td><td>開啟 tmux 指令輸入模式</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Keybinds: Resize -->
+    <section id="keybind-resize">
+      <h2>快捷鍵 — Pane 調整大小</h2>
+      <p>這些按鍵支援 <strong>重複按住</strong>（<code>-r</code> 旗標），不需要每次都重按 Prefix。</p>
+
+      <table>
+        <thead><tr><th>按鍵</th><th>效果</th><th>幅度</th></tr></thead>
+        <tbody>
+          <tr><td><span class="key prefix">^A</span> <span class="key">,</span></td><td>縮小寬度（向左）</td><td>20 格</td></tr>
+          <tr><td><span class="key prefix">^A</span> <span class="key">.</span></td><td>增加寬度（向右）</td><td>20 格</td></tr>
+          <tr><td><span class="key prefix">^A</span> <span class="key">-</span></td><td>縮小高度（向下）</td><td>7 行</td></tr>
+          <tr><td><span class="key prefix">^A</span> <span class="key">=</span></td><td>增加高度（向上）</td><td>7 行</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Keybinds: Copy Mode -->
+    <section id="keybind-copy">
+      <h2>快捷鍵 — Copy Mode（Vi 模式）</h2>
+      <pre><code><span class="key-word">setw</span> <span class="option">-g</span> mode-keys <span class="value">vi</span>
+<span class="key-word">bind-key</span> <span class="option">-T</span> copy-mode-vi <span class="value">v</span> send-keys <span class="option">-X</span> begin-selection</code></pre>
+
+      <table>
+        <thead><tr><th>按鍵</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="key prefix">^A</span> <span class="key">[</span></td>
+            <td>進入 Copy Mode</td>
+          </tr>
+          <tr>
+            <td><span class="key">j</span> / <span class="key">k</span></td>
+            <td>上下捲動（Copy Mode 內）</td>
+          </tr>
+          <tr>
+            <td><span class="key">/</span></td>
+            <td>向下搜尋</td>
+          </tr>
+          <tr>
+            <td><span class="key">?</span></td>
+            <td>向上搜尋</td>
+          </tr>
+          <tr>
+            <td><span class="key">v</span></td>
+            <td>開始選取（begin-selection）</td>
+          </tr>
+          <tr>
+            <td><span class="key">y</span></td>
+            <td>複製選取內容（tmux-yank 同步至系統剪貼簿）</td>
+          </tr>
+          <tr>
+            <td><span class="key">q</span> 或 <span class="key">Esc</span></td>
+            <td>離開 Copy Mode</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Plugins List -->
+    <section id="plugins-list">
+      <h2>插件清單</h2>
+
+      <div class="plugin-grid">
+        <div class="plugin-card">
+          <div class="plugin-name">TPM</div>
+          <div class="plugin-repo">tmux-plugins/tpm</div>
+          <p>插件管理器。<code>^A I</code> 安裝，<code>^A U</code> 更新，<code>^A alt+u</code> 移除未使用的插件。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-sensible</div>
+          <div class="plugin-repo">tmux-plugins/tmux-sensible</div>
+          <p>提供合理的預設值（utf-8、focus-events、reattach-to-user-namespace 等）。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-yank</div>
+          <div class="plugin-repo">tmux-plugins/tmux-yank</div>
+          <p>Copy Mode 複製時自動同步到 macOS 系統剪貼簿（pbcopy）。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-resurrect</div>
+          <div class="plugin-repo">tmux-plugins/tmux-resurrect</div>
+          <p>手動儲存（<code>^A ^S</code>）並還原（<code>^A ^R</code>）整個 tmux 環境，含 Neovim session。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-continuum</div>
+          <div class="plugin-repo">tmux-plugins/tmux-continuum</div>
+          <p>每 15 分鐘自動儲存，tmux 啟動時自動還原。搭配 resurrect 使用。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-thumbs</div>
+          <div class="plugin-repo">fcsonline/tmux-thumbs</div>
+          <p>類似 vimium 的 hint 模式，按一個字母即可快速複製畫面上的路徑/URL/hash。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-fzf</div>
+          <div class="plugin-repo">sainnhe/tmux-fzf</div>
+          <p>用 fzf 管理 session、window、pane、keybind。<code>^A F</code> 開啟。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-fzf-url</div>
+          <div class="plugin-repo">wfxr/tmux-fzf-url</div>
+          <p>掃描畫面上的 URL，用 fzf 選取後直接在瀏覽器開啟。<code>^A u</code> 觸發。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">catppuccin-tmux</div>
+          <div class="plugin-repo">omerxx/catppuccin-tmux</div>
+          <p>Catppuccin Mocha 主題，含 status bar 模組（session、directory、date_time）。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-sessionx</div>
+          <div class="plugin-repo">omerxx/tmux-sessionx</div>
+          <p>進階 session 管理器，整合 zoxide 路徑，支援即時預覽與建立新 session。</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-name">tmux-floax</div>
+          <div class="plugin-repo">omerxx/tmux-floax</div>
+          <p>一鍵開啟浮動 pane，繼承目前工作目錄，適合快速查指令。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Plugin: floax -->
+    <section id="plugin-floax">
+      <h2>tmux-floax — 浮動 Pane</h2>
+      <p>按一個鍵就能召喚/收起一個浮動的終端機 pane，不中斷目前工作。</p>
+
+      <pre><code><span class="key-word">set</span> <span class="option">-g</span> @floax-width         <span class="string">'80%'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @floax-height        <span class="string">'80%'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @floax-border-color  <span class="string">'magenta'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @floax-text-color    <span class="string">'blue'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @floax-bind          <span class="string">'p'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @floax-change-path   <span class="string">'true'</span></code></pre>
+
+      <table>
+        <thead><tr><th>設定</th><th>值</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr><td><code>width / height</code></td><td>80%</td><td>浮動視窗佔螢幕 80%，視覺上夠大不感到擁擠</td></tr>
+          <tr><td><code>border-color</code></td><td>magenta</td><td>紫紅色邊框，易於識別這是浮動 pane</td></tr>
+          <tr><td><code>text-color</code></td><td>blue</td><td>浮動 pane 內文字顏色</td></tr>
+          <tr><td><code>bind</code></td><td><code>p</code></td><td>觸發鍵：<span class="key prefix">^A</span> <span class="key">p</span></td></tr>
+          <tr><td><code>change-path</code></td><td>true</td><td>自動切換到呼叫時所在的工作目錄</td></tr>
+        </tbody>
+      </table>
+
+      <h3>使用方式</h3>
+      <table>
+        <thead><tr><th>操作</th><th>按鍵</th></tr></thead>
+        <tbody>
+          <tr><td>開啟浮動 pane</td><td><span class="key prefix">^A</span> <span class="key">p</span></td></tr>
+          <tr><td>收起浮動 pane</td><td><span class="key prefix">^A</span> <span class="key">p</span>（再按一次）</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Plugin: sessionx -->
+    <section id="plugin-sessionx">
+      <h2>tmux-sessionx — Session 管理器</h2>
+      <p>整合 <code>zoxide</code> 的強化 session 管理器，可預覽、切換、建立 session。</p>
+
+      <pre><code><span class="key-word">set</span> <span class="option">-g</span> @sessionx-bind                    <span class="string">'o'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-auto-accept             <span class="string">'off'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-custom-paths            <span class="string">'/Users/omerxx/dotfiles'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-x-path                  <span class="string">'~/dotfiles'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-window-height           <span class="string">'85%'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-window-width            <span class="string">'75%'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-zoxide-mode             <span class="string">'on'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-custom-paths-subdirectories <span class="string">'false'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-filter-current          <span class="string">'false'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @sessionx-bind-zo-new-window       <span class="string">'ctrl-y'</span></code></pre>
+
+      <table>
+        <thead><tr><th>設定</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr><td><code>bind = o</code></td><td><span class="key prefix">^A</span> <span class="key">o</span> 開啟 sessionx 面板</td></tr>
+          <tr><td><code>auto-accept = off</code></td><td>選取後不自動確認，需按 Enter</td></tr>
+          <tr><td><code>window-height/width</code></td><td>面板大小 85% × 75%</td></tr>
+          <tr><td><code>zoxide-mode = on</code></td><td>整合 zoxide 最近目錄，可直接用路徑建立 session</td></tr>
+          <tr><td><code>filter-current = false</code></td><td>清單中顯示目前 session（不過濾）</td></tr>
+          <tr><td><code>bind-zo-new-window = ctrl-y</code></td><td>在 sessionx 面板內，<code>Ctrl+Y</code> 以 zoxide 路徑開新視窗</td></tr>
+        </tbody>
+      </table>
+
+      <h3>使用方式</h3>
+      <table>
+        <thead><tr><th>操作</th><th>按鍵</th></tr></thead>
+        <tbody>
+          <tr><td>開啟 sessionx</td><td><span class="key prefix">^A</span> <span class="key">o</span></td></tr>
+          <tr><td>輸入搜尋（session 名稱或 zoxide 路徑）</td><td>直接打字</td></tr>
+          <tr><td>切換到選取的 session</td><td><span class="key">Enter</span></td></tr>
+          <tr><td>用 zoxide 路徑開新視窗</td><td><span class="key">Ctrl+Y</span>（在面板內）</td></tr>
+          <tr><td>取消</td><td><span class="key">Esc</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Plugin: resurrect + continuum -->
+    <section id="plugin-resurrect">
+      <h2>tmux-resurrect + tmux-continuum — Session 持久化</h2>
+
+      <pre><code><span class="key-word">set</span> <span class="option">-g</span> @continuum-restore       <span class="string">'on'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @resurrect-strategy-nvim <span class="string">'session'</span></code></pre>
+
+      <table>
+        <thead><tr><th>功能</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>自動儲存</td>
+            <td>tmux-continuum 每 15 分鐘自動儲存所有 session、window、pane 的狀態</td>
+          </tr>
+          <tr>
+            <td>自動還原</td>
+            <td><code>continuum-restore = on</code>：tmux 啟動時自動還原上次的環境</td>
+          </tr>
+          <tr>
+            <td>Neovim 還原</td>
+            <td><code>resurrect-strategy-nvim = session</code>：還原時重新開啟 Neovim 並載入上次的 session 檔</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>手動操作</h3>
+      <table>
+        <thead><tr><th>操作</th><th>按鍵</th></tr></thead>
+        <tbody>
+          <tr><td>手動儲存</td><td><span class="key prefix">^A</span> <span class="key">Ctrl+S</span></td></tr>
+          <tr><td>手動還原</td><td><span class="key prefix">^A</span> <span class="key">Ctrl+R</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Plugin: catppuccin -->
+    <section id="plugin-catppuccin">
+      <h2>catppuccin-tmux — 主題設定</h2>
+      <p>使用 <strong>Catppuccin Mocha</strong> 配色，搭配自訂 separator 與 status bar 模組。</p>
+
+      <pre><code><span class="comment"># Window tab 樣式</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_left_separator   <span class="string">""</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_right_separator  <span class="string">" "</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_middle_separator <span class="string">" █"</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_number_position  <span class="string">"right"</span>
+
+<span class="comment"># 非當前視窗</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_default_fill <span class="string">"number"</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_default_text <span class="string">"#W"</span>
+
+<span class="comment"># 當前視窗（含 zoom 指示）</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_current_fill <span class="string">"number"</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_window_current_text <span class="string">"#W#{?window_zoomed_flag,(),}"</span>
+
+<span class="comment"># Status bar 模組</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_status_modules_right   <span class="string">"directory"</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_status_modules_left    <span class="string">"session"</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_status_left_separator  <span class="string">" "</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_status_right_separator <span class="string">" "</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_status_fill            <span class="string">"icon"</span>
+<span class="key-word">set</span> <span class="option">-g</span> @catppuccin_directory_text         <span class="string">"#{b:pane_current_path}"</span>
+
+<span class="comment"># 停用中的模組（取消註解可啟用）</span>
+<span class="comment"># set -g @catppuccin_status_modules_right "directory date_time"</span>
+<span class="comment"># set -g @catppuccin_meetings_text "#($HOME/.config/tmux/scripts/cal.sh)"</span>
+<span class="comment"># set -g @catppuccin_date_time_text "%H:%M"</span></code></pre>
+
+      <h3>Status Bar 外觀預覽</h3>
+      <div class="statusbar-preview">
+        <div class="bar">
+          <div class="sb-session"> dotfiles</div>
+          <div class="sb-win active">nvim <span class="sb-zoom"></span></div>
+          <div class="sb-win">zsh</div>
+          <div class="sb-win">htop</div>
+          <div class="sb-spacer"></div>
+          <div class="sb-dir"> dotfiles</div>
+        </div>
+      </div>
+
+      <table>
+        <thead><tr><th>位置</th><th>模組</th><th>顯示內容</th></tr></thead>
+        <tbody>
+          <tr><td>左側</td><td><code>session</code></td><td>目前 session 名稱，帶 Nerd Font 圖示</td></tr>
+          <tr><td>中間</td><td>window tabs</td><td>每個視窗的名稱，目前視窗高亮；zoom 時顯示 <code>()</code></td></tr>
+          <tr><td>右側</td><td><code>directory</code></td><td>目前 pane 所在目錄名（basename 只顯示最後一層）</td></tr>
+        </tbody>
+      </table>
+
+      <h3>可選啟用的模組</h3>
+      <table>
+        <thead><tr><th>模組</th><th>啟用方式</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>date_time</code></td>
+            <td>在 <code>status_modules_right</code> 加入 <code>date_time</code>，並取消 <code>date_time_text</code> 的 <code>#</code></td>
+            <td>右側顯示 <code>HH:MM</code> 時間</td>
+          </tr>
+          <tr>
+            <td><code>meetings</code></td>
+            <td>取消 <code>catppuccin_meetings_text</code> 的 <code>#</code>，並安裝 <code>icalBuddy</code></td>
+            <td>右側顯示下一個行事曆會議（見 Calendar 腳本說明）</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Plugin: fzf-url -->
+    <section id="plugin-fzf-url">
+      <h2>tmux-fzf-url — URL 快速開啟</h2>
+
+      <pre><code><span class="key-word">set</span> <span class="option">-g</span> @fzf-url-fzf-options    <span class="string">'-p 60%,30% --prompt="   " --border-label=" Open URL "'</span>
+<span class="key-word">set</span> <span class="option">-g</span> @fzf-url-history-limit <span class="string">'2000'</span></code></pre>
+
+      <table>
+        <thead><tr><th>設定</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr><td>fzf popup 大小</td><td>60% 寬 × 30% 高，右下角小視窗</td></tr>
+          <tr><td>Prompt</td><td>顯示 Nerd Font 搜尋圖示（）</td></tr>
+          <tr><td>Border label</td><td>標題列顯示「Open URL」</td></tr>
+          <tr><td>history-limit</td><td>掃描最近 2000 行輸出中的 URL</td></tr>
+        </tbody>
+      </table>
+
+      <h3>使用方式</h3>
+      <table>
+        <thead><tr><th>操作</th><th>按鍵</th></tr></thead>
+        <tbody>
+          <tr><td>開啟 URL 選擇器</td><td><span class="key prefix">^A</span> <span class="key">u</span></td></tr>
+          <tr><td>選取並在瀏覽器開啟</td><td>用方向鍵或輸入搜尋後按 <span class="key">Enter</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Plugin: thumbs -->
+    <section id="plugin-thumbs">
+      <h2>tmux-thumbs — Hint 模式複製</h2>
+      <p>類似 Vimium 的操作：掃描畫面上所有可複製的文字（路徑、hash、URL、IP），每個標上一個字母 hint，按下字母即複製。</p>
+
+      <h3>使用方式</h3>
+      <table>
+        <thead><tr><th>操作</th><th>按鍵</th></tr></thead>
+        <tbody>
+          <tr><td>觸發 thumbs 模式</td><td><span class="key prefix">^A</span> <span class="key">Space</span>（預設）</td></tr>
+          <tr><td>按下 hint 字母</td><td>對應文字自動複製到剪貼簿</td></tr>
+          <tr><td>大寫字母</td><td>複製並同時貼上</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Plugin: tmux-fzf -->
+    <section id="plugin-fzf">
+      <h2>tmux-fzf — fzf 全功能管理器</h2>
+      <p>用 fzf 互動式管理 session、window、pane、keybinding、clipboard 歷史，功能最完整。與 tmux-sessionx 的差別：sessionx 專注 session 切換，tmux-fzf 涵蓋所有資源類型。</p>
+
+      <h3>觸發方式</h3>
+      <table>
+        <thead><tr><th>按鍵</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr><td><span class="key prefix">^A</span> <span class="key">F</span></td><td>開啟 tmux-fzf 主選單（大寫 F）</td></tr>
+        </tbody>
+      </table>
+
+      <h3>主選單選項</h3>
+      <table>
+        <thead><tr><th>選項</th><th>效果</th></tr></thead>
+        <tbody>
+          <tr><td>Sessions</td><td>切換、新建、重命名、刪除 session</td></tr>
+          <tr><td>Windows</td><td>切換、新建、重命名、關閉視窗</td></tr>
+          <tr><td>Panes</td><td>切換、交換、分離 pane</td></tr>
+          <tr><td>Key Bindings</td><td>搜尋所有快捷鍵並直接執行</td></tr>
+          <tr><td>Clipboard</td><td>瀏覽並貼上 tmux buffer 歷史</td></tr>
+          <tr><td>Processes</td><td>搜尋程序並傳送 signal</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <span class="icon">💡</span>
+        <div><strong>tmux-fzf vs tmux-sessionx</strong><br>
+        平時切換 session 用 <code>^A o</code>（sessionx，整合 zoxide，速度快）；需要管理 window/pane/keybind 時用 <code>^A F</code>（tmux-fzf，功能全）。</div>
+      </div>
+    </section>
+
+    <!-- Status Bar Details -->
+    <section id="statusbar">
+      <h2>Status Bar 外觀細節</h2>
+
+      <h3>Window Tab 格式</h3>
+      <p>視窗名稱由 <code>#W</code> 取得（即程式名稱），目前視窗若 zoom 會在名稱後加上 <code>()</code>。</p>
+
+      <table>
+        <thead><tr><th>狀態</th><th>格式</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>一般視窗</td>
+            <td><code>#W</code></td>
+            <td>顯示程式名稱，例如：<code>nvim</code>、<code>zsh</code></td>
+          </tr>
+          <tr>
+            <td>目前視窗（正常）</td>
+            <td><code>#W</code></td>
+            <td>高亮顯示</td>
+          </tr>
+          <tr>
+            <td>目前視窗（已 zoom）</td>
+            <td><code>#W()</code></td>
+            <td>括號符號表示此 pane 處於全螢幕 zoom 狀態</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Directory 模組</h3>
+      <p>使用 <code>#{b:pane_current_path}</code>，只顯示路徑的最後一個目錄名稱（basename）：</p>
+      <pre><code><span class="comment"># 例：~/code/oss/dotfiles → 顯示 dotfiles</span></code></pre>
+    </section>
+
+    <!-- Calendar Script -->
+    <section id="cal-script">
+      <h2>Calendar 腳本（目前停用）</h2>
+      <p>位於 <code>~/.config/tmux/scripts/cal.sh</code>，整合 <strong>icalBuddy</strong> 在 status bar 顯示即將到來的會議。</p>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div>此功能目前已透過 <code>#</code> 停用。若要啟用，需先安裝 <code>icalBuddy</code>（<code>brew install ical-buddy</code>），並在 <code>tmux.conf</code> 中取消以下三行的註解：
+        <pre style="margin-top:8px"><code>set -g @catppuccin_status_modules_right "directory date_time"
+set -g @catppuccin_meetings_text "#($HOME/.config/tmux/scripts/cal.sh)"
+set -g @catppuccin_date_time_text "%H:%M"</code></pre>
+        </div>
+      </div>
+
+      <h3>腳本功能</h3>
+      <table>
+        <thead><tr><th>功能</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>顯示下一個會議</td>
+            <td>從 macOS 行事曆讀取當天最近一個非全天事件</td>
+          </tr>
+          <tr>
+            <td>即將到來提示</td>
+            <td>若距離開始 &lt; 10 分鐘，顯示 <code>🕑 HH:MM 會議名稱 (X minutes)</code></td>
+          </tr>
+          <tr>
+            <td>閒置顯示</td>
+            <td>無即將到來的會議時顯示 <code>󱁕</code>（自由圖示）</td>
+          </tr>
+          <tr>
+            <td>Popup 提醒</td>
+            <td>距離開始剩 &lt;10 秒時，自動在 tmux 彈出會議詳細資訊 popup</td>
+          </tr>
+          <tr>
+            <td>跳過個人行事曆</td>
+            <td>排除 <code>training</code>、<code>omerxx@gmail.com</code> 的行事曆</td>
+          </tr>
+          <tr>
+            <td>單人會議跳過</td>
+            <td>若出席者 &lt; 2 人（只有自己），顯示下一個會議</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>依賴工具</h3>
+      <table>
+        <thead><tr><th>工具</th><th>安裝</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>icalBuddy</code></td>
+            <td><code>brew install ical-buddy</code></td>
+            <td>讀取 macOS 行事曆事件</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Anki Cards -->
+    <section id="anki">
+      <h2>Anki 記憶卡（44 張）</h2>
+      <p>點擊卡片翻面查看答案。反覆練習直到不需要查詢為止。</p>
+
+      <div class="anki-export-bar">
+        <button class="export-btn" onclick="toggleExport()">⬇ 匯出 Anki 格式（TSV）</button>
+        <span class="export-hint">儲存為 .txt → Anki 桌面版：檔案 → 匯入 → 分隔符號選 Tab</span>
+      </div>
+      <div id="export-area" style="display:none">
+        <div class="export-controls">
+          <button class="cat-btn active" onclick="copyExport()">複製全部</button>
+          <span id="copy-msg">✓ 已複製到剪貼簿</span>
+        </div>
+        <textarea id="export-text" readonly spellcheck="false"></textarea>
+      </div>
+
+      <div class="category-filter">
+        <button class="cat-btn active" data-cat="all"     onclick="filterCards('all')">全部 (44)</button>
+        <button class="cat-btn"        data-cat="session" onclick="filterCards('session')">Session (6)</button>
+        <button class="cat-btn"        data-cat="window"  onclick="filterCards('window')">Window (7)</button>
+        <button class="cat-btn"        data-cat="pane"    onclick="filterCards('pane')">Pane (10)</button>
+        <button class="cat-btn"        data-cat="resize"  onclick="filterCards('resize')">Resize (4)</button>
+        <button class="cat-btn"        data-cat="copy"    onclick="filterCards('copy')">Copy Mode (6)</button>
+        <button class="cat-btn"        data-cat="plugin"  onclick="filterCards('plugin')">插件 (5)</button>
+        <button class="cat-btn"        data-cat="config"  onclick="filterCards('config')">設定知識 (6)</button>
+      </div>
+
+      <div class="anki-grid" id="anki-grid">
+
+        <!-- ── SESSION ── -->
+        <div class="anki-card" data-cat="session" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Session</div>
+              <div class="anki-question">離開 tmux<br>（session 背景繼續執行）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A ^D</div>
+              <div class="anki-desc">detach-client<br>session 不中斷</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="session" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Session</div>
+              <div class="anki-question">開啟 sessionx<br>fzf 管理器</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A o</div>
+              <div class="anki-desc">tmux-sessionx<br>整合 zoxide 路徑</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="session" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Session</div>
+              <div class="anki-question">瀏覽所有 session<br>（內建選擇器）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A S</div>
+              <div class="anki-desc">choose-session<br>（大寫 S）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="session" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Session</div>
+              <div class="anki-question">重新命名<br>目前 session</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A $</div>
+              <div class="anki-desc">rename-session</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="session" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Session</div>
+              <div class="anki-question">手動儲存<br>session 狀態</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A Ctrl+S</div>
+              <div class="anki-desc">tmux-resurrect save</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="session" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Session</div>
+              <div class="anki-question">手動還原<br>session 狀態</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A Ctrl+R</div>
+              <div class="anki-desc">tmux-resurrect restore</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WINDOW ── -->
+        <div class="anki-card" data-cat="window" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Window</div>
+              <div class="anki-question">在 $HOME<br>新建視窗</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A ^C</div>
+              <div class="anki-desc">new-window at $HOME</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="window" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Window</div>
+              <div class="anki-question">切換到<br>上一個視窗</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A H</div>
+              <div class="anki-desc">previous-window（大寫 H）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="window" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Window</div>
+              <div class="anki-question">切換到<br>下一個視窗</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A L</div>
+              <div class="anki-desc">next-window（大寫 L）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="window" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Window</div>
+              <div class="anki-question">切換到<br>上次使用的視窗</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A ^A</div>
+              <div class="anki-desc">last-window</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="window" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Window</div>
+              <div class="anki-question">重新命名<br>目前視窗</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A r</div>
+              <div class="anki-desc">rename-window（小寫 r）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="window" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Window</div>
+              <div class="anki-question">重新載入<br>tmux.conf 設定</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A R</div>
+              <div class="anki-desc">source-file（大寫 R）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="window" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Window</div>
+              <div class="anki-question">列出<br>所有視窗</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A ^W 或 w</div>
+              <div class="anki-desc">list-windows</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PANE ── -->
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">水平分割<br>（新 pane 在下）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A s</div>
+              <div class="anki-desc">繼承目前工作目錄</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">垂直分割<br>（新 pane 在右）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A v</div>
+              <div class="anki-desc">繼承目前工作目錄</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">關閉<br>目前 pane</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A c</div>
+              <div class="anki-desc">kill-pane</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">Zoom 全螢幕<br>切換 pane</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A z</div>
+              <div class="anki-desc">zoom toggle<br>狀態列顯示 ()</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">開啟<br>浮動 pane</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A p</div>
+              <div class="anki-desc">tmux-floax<br>80% 螢幕，紫框</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">清空<br>pane 內容</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A K</div>
+              <div class="anki-desc">傳送 clear + Enter<br>（大寫 K）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane 導覽</div>
+              <div class="anki-question">移動到左 / 右 pane</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A h / l</div>
+              <div class="anki-desc">select-pane -L / -R</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane 導覽</div>
+              <div class="anki-question">移動到上 / 下 pane</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A k / j</div>
+              <div class="anki-desc">select-pane -U / -D</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">與下一個 pane<br>交換位置</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A x</div>
+              <div class="anki-desc">swap-pane -D</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="pane" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Pane</div>
+              <div class="anki-question">同步輸入到<br>所有 pane</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A *</div>
+              <div class="anki-desc">synchronize-panes toggle</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── RESIZE ── -->
+        <div class="anki-card" data-cat="resize" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Resize</div>
+              <div class="anki-question">縮小 pane 寬度</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A ,</div>
+              <div class="anki-desc">-20 格，可重複按住</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="resize" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Resize</div>
+              <div class="anki-question">增加 pane 寬度</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A .</div>
+              <div class="anki-desc">+20 格，可重複按住</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="resize" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Resize</div>
+              <div class="anki-question">縮小 pane 高度</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A -</div>
+              <div class="anki-desc">-7 行，可重複按住</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="resize" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Resize</div>
+              <div class="anki-question">增加 pane 高度</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A =</div>
+              <div class="anki-desc">+7 行，可重複按住</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── COPY MODE ── -->
+        <div class="anki-card" data-cat="copy" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Copy Mode</div>
+              <div class="anki-question">進入<br>Copy Mode</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A [</div>
+              <div class="anki-desc">vi copy mode<br>j/k 捲動</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="copy" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Copy Mode</div>
+              <div class="anki-question">開始選取文字<br>（Copy Mode 內）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">v</div>
+              <div class="anki-desc">begin-selection</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="copy" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Copy Mode</div>
+              <div class="anki-question">複製選取文字<br>（Copy Mode 內）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">y</div>
+              <div class="anki-desc">tmux-yank<br>同步到系統剪貼簿</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="copy" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Copy Mode</div>
+              <div class="anki-question">向下搜尋<br>（Copy Mode 內）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">/</div>
+              <div class="anki-desc">n 繼續，N 反向</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="copy" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Copy Mode</div>
+              <div class="anki-question">向上搜尋<br>（Copy Mode 內）</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">?</div>
+              <div class="anki-desc">n 繼續，N 反向</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="copy" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">Copy Mode</div>
+              <div class="anki-question">離開<br>Copy Mode</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">q 或 Esc</div>
+              <div class="anki-desc">回到正常模式</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PLUGIN ── -->
+        <div class="anki-card" data-cat="plugin" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">插件 TPM</div>
+              <div class="anki-question">安裝<br>TPM 插件</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A I</div>
+              <div class="anki-desc">TPM Install（大寫 I）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="plugin" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">插件 TPM</div>
+              <div class="anki-question">更新<br>TPM 插件</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A U</div>
+              <div class="anki-desc">TPM Update（大寫 U）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="plugin" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">插件</div>
+              <div class="anki-question">開啟<br>URL 選擇器</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A u</div>
+              <div class="anki-desc">tmux-fzf-url<br>掃描畫面 URL 並開啟</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="plugin" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">插件</div>
+              <div class="anki-question">觸發<br>thumbs 複製模式</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A Space</div>
+              <div class="anki-desc">tmux-thumbs<br>字母 hint 快速複製</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="plugin" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">插件</div>
+              <div class="anki-question">開啟<br>tmux-fzf 主選單</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">^A F</div>
+              <div class="anki-desc">tmux-fzf（大寫 F）<br>管理 session/pane/key</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CONFIG KNOWLEDGE ── -->
+        <div class="anki-card" data-cat="config" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">設定知識</div>
+              <div class="anki-question">本設定的<br>Prefix 鍵</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">Ctrl+A (^A)</div>
+              <div class="anki-desc">預設是 Ctrl+B<br>改為 GNU Screen 傳統</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="config" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">設定知識</div>
+              <div class="anki-question">Status bar<br>顯示在哪？</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">top（上方）</div>
+              <div class="anki-desc">status-position top<br>macOS 風格</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="config" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">設定知識</div>
+              <div class="anki-question">視窗編號<br>起始值</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">1</div>
+              <div class="anki-desc">base-index 1<br>符合鍵盤左起習慣</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="config" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">設定知識</div>
+              <div class="anki-question">捲動歷史<br>行數上限</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">1,000,000 行</div>
+              <div class="anki-desc">history-limit<br>可滾動超長輸出</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="config" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">設定知識</div>
+              <div class="anki-question">Esc 鍵<br>延遲設定為多少？</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">0 ms</div>
+              <div class="anki-desc">escape-time 0<br>Neovim 模式切換更快</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anki-card" data-cat="config" onclick="flipCard(this)">
+          <div class="anki-inner">
+            <div class="anki-front">
+              <div class="anki-cat-badge">設定知識</div>
+              <div class="anki-question">Copy Mode<br>使用哪種按鍵模式？</div>
+              <div class="anki-tap">點擊翻面 ↩</div>
+            </div>
+            <div class="anki-back">
+              <div class="anki-answer">vi</div>
+              <div class="anki-desc">mode-keys vi<br>j/k 移動，v 選取，y 複製</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+<script>
+  function flipCard(el) {
+    el.classList.toggle('flipped');
+  }
+
+  function filterCards(cat) {
+    document.querySelectorAll('.anki-card').forEach(c => {
+      const show = cat === 'all' || c.dataset.cat === cat;
+      c.style.display = show ? '' : 'none';
+      if (!show) c.classList.remove('flipped');
+    });
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.cat === cat);
+    });
+  }
+
+  function toggleExport() {
+    const area = document.getElementById('export-area');
+    if (area.style.display === 'none') {
+      const lines = [];
+      document.querySelectorAll('.anki-card').forEach(card => {
+        const cat = card.querySelector('.anki-cat-badge').textContent.trim();
+        const q   = card.querySelector('.anki-question').innerText.trim().replace(/\s+/g, ' ');
+        const a   = card.querySelector('.anki-answer').textContent.trim();
+        const d   = card.querySelector('.anki-desc').innerText.trim().replace(/\n+/g, '，');
+        lines.push(`[${cat}] ${q}\t${a} — ${d}`);
+      });
+      document.getElementById('export-text').value = lines.join('\n');
+      area.style.display = '';
+    } else {
+      area.style.display = 'none';
+    }
+  }
+
+  function copyExport() {
+    const ta = document.getElementById('export-text');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(() => {
+      const msg = document.getElementById('copy-msg');
+      msg.style.display = 'inline';
+      setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    }).catch(() => {
+      document.execCommand('copy');
+    });
+  }
+</script>
+</body>
+</html>
