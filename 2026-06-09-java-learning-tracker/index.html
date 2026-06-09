@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terminal Java 學習追蹤器</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #7d8590;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --yellow: #d29922;
+  --orange: #f0883e;
+  --red: #f85149;
+  --purple: #bc8cff;
+  --pink: #ff7b72;
+  --p1: #58a6ff;
+  --p2: #3fb950;
+  --p3: #bc8cff;
+  --p4: #f0883e;
+  --p5: #f85149;
+  --p6: #d29922;
+  --extra: #79c0ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Header */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(13,17,23,0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex; align-items: center; gap: 20px;
+}
+.header h1 { font-size: 16px; font-weight: 600; white-space: nowrap; }
+.header h1 span { color: var(--accent); }
+.overall-progress { flex: 1; }
+.progress-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 3px; transition: width 0.4s ease; }
+.stats { display: flex; gap: 16px; font-size: 12px; }
+.stat { text-align: center; }
+.stat-num { font-size: 18px; font-weight: 700; color: var(--accent); }
+.stat-label { color: var(--text-muted); font-size: 11px; }
+
+/* Layout */
+.layout { display: flex; min-height: calc(100vh - 65px); }
+
+/* Sidebar */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px 0;
+  position: sticky; top: 65px; height: calc(100vh - 65px);
+  overflow-y: auto;
+}
+.sidebar-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 16px 8px; }
+.phase-nav { list-style: none; }
+.phase-nav li { }
+.phase-nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px; font-size: 13px; color: var(--text-muted);
+  transition: all 0.15s; border-left: 2px solid transparent;
+}
+.phase-nav a:hover { background: var(--surface2); color: var(--text); text-decoration: none; }
+.phase-nav a.active { color: var(--text); background: var(--surface2); }
+.phase-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.phase-mini-progress { margin: 0 16px 4px; height: 3px; background: var(--surface2); border-radius: 2px; }
+.phase-mini-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+.sidebar-section { margin-top: 16px; }
+.nav-extra-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px; font-size: 13px; color: var(--text-muted);
+  cursor: pointer; border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+.nav-extra-link:hover { background: var(--surface2); color: var(--text); }
+.nav-extra-link svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* Main */
+.main { flex: 1; padding: 24px; max-width: 900px; }
+
+/* Phase block */
+.phase-block { margin-bottom: 48px; scroll-margin-top: 80px; }
+.phase-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.phase-badge {
+  padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  background: color-mix(in srgb, var(--color) 15%, transparent);
+  color: var(--color);
+  border: 1px solid color-mix(in srgb, var(--color) 30%, transparent);
+}
+.phase-title { font-size: 20px; font-weight: 700; }
+.phase-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.phase-progress-wrap { margin-left: auto; text-align: right; }
+.phase-progress-text { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.phase-progress-bar { width: 100px; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.phase-progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+
+/* Week group */
+.week-group { margin-bottom: 24px; }
+.week-label {
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.week-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Day card */
+.day-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.day-card:hover { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.day-card.all-done { border-color: color-mix(in srgb, var(--green) 40%, transparent); background: color-mix(in srgb, var(--green) 4%, var(--surface)); }
+.day-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; cursor: pointer;
+  user-select: none;
+}
+.day-num {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+  background: var(--surface2); color: var(--text-muted);
+}
+.day-card.all-done .day-num { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
+.day-title { font-size: 14px; font-weight: 600; flex: 1; }
+.day-tools { display: flex; gap: 4px; flex-wrap: wrap; }
+.tool-tag {
+  padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'SF Mono', monospace;
+  background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border);
+}
+.day-check-summary { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.day-toggle { color: var(--text-muted); transition: transform 0.2s; font-size: 12px; }
+.day-card.open .day-toggle { transform: rotate(180deg); }
+
+.day-body { padding: 0 16px 14px; display: none; }
+.day-card.open .day-body { display: block; }
+
+/* Tasks */
+.task-list { list-style: none; }
+.task-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.task-item:last-child { border-bottom: none; }
+.task-cb { margin-top: 2px; flex-shrink: 0; }
+.task-cb input[type="checkbox"] {
+  width: 16px; height: 16px; cursor: pointer; accent-color: var(--green);
+}
+.task-text { font-size: 13px; line-height: 1.5; flex: 1; }
+.task-text.done { text-decoration: line-through; color: var(--text-muted); }
+.task-note { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.task-diff { font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+.diff-easy { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+.diff-medium { background: color-mix(in srgb, var(--yellow) 15%, transparent); color: var(--yellow); }
+.diff-hard { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+
+/* Code block */
+.code-block {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px; margin-top: 10px;
+  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+  line-height: 1.6; overflow-x: auto; color: #a5d6ff;
+}
+.code-block .comment { color: var(--text-muted); }
+.code-block .key { color: var(--purple); }
+
+/* Section divider in day body */
+.day-section-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 0 6px; }
+
+/* Extra items block */
+.extra-block {
+  background: color-mix(in srgb, var(--extra) 5%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--extra) 25%, transparent);
+  border-radius: 8px; padding: 20px; margin-bottom: 48px;
+  scroll-margin-top: 80px;
+}
+.extra-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.extra-header h2 { font-size: 18px; font-weight: 700; color: var(--extra); }
+.extra-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+.extra-group { margin-bottom: 20px; }
+.extra-group-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.extra-group-title::before { content: ''; width: 3px; height: 14px; border-radius: 2px; background: var(--extra); display: block; }
+
+/* Cheatsheet panel */
+.cheatsheet {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; margin-top: 10px;
+}
+.cheatsheet-header {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; display: flex; justify-content: space-between;
+}
+.cheatsheet-body { padding: 10px 14px; display: none; }
+.cheatsheet.open .cheatsheet-body { display: block; }
+.shortcut-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.shortcut-table td { padding: 4px 8px; border-bottom: 1px solid var(--border); }
+.shortcut-table tr:last-child td { border-bottom: none; }
+.shortcut-table td:first-child { font-family: 'SF Mono', monospace; color: var(--purple); white-space: nowrap; }
+
+/* Reset section */
+.reset-bar {
+  padding: 12px 24px; background: var(--surface); border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; font-size: 12px;
+}
+.btn {
+  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); cursor: pointer; font-size: 12px;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+.btn-danger:hover { border-color: var(--red); color: var(--red); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Responsive */
+@media (max-width: 720px) {
+  .sidebar { display: none; }
+  .stats { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>Terminal <span>Java</span> 學習計畫</h1>
+  <div class="overall-progress">
+    <div class="progress-label">
+      <span>整體進度</span>
+      <span id="overall-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="overall-bar" style="width:0%"></div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="stat-done">0</div><div class="stat-label">已完成</div></div>
+    <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">共幾項</div></div>
+    <div class="stat"><div class="stat-num" id="stat-days">0</div><div class="stat-label">學習天數</div></div>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-title">學習 Phases</div>
+  <ul class="phase-nav" id="phase-nav"></ul>
+  <div class="sidebar-section">
+    <div class="sidebar-title">其他</div>
+    <div class="nav-extra-link" onclick="scrollToExtra()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13zm.75-9.75a.75.75 0 10-1.5 0v4.5a.75.75 0 001.5 0v-4.5zm-.75 7a.875.875 0 100-1.75.875.875 0 000 1.75z"/></svg>
+      額外必學項目
+    </div>
+  </div>
+</nav>
+
+<main class="main" id="main-content"></main>
+</div>
+
+<div class="reset-bar">
+  <span style="color:var(--text-muted)">進度自動儲存在 localStorage</span>
+  <button class="btn btn-danger" onclick="resetAll()">清除所有進度</button>
+</div>
+
+<script>
+// ─── Data ──────────────────────────────────────────────────────────────────
+
+const PHASES = [
+  {
+    id: 'p1', label: 'Phase 1', title: '地基：Shell 工具', duration: '第 1–2 週',
+    color: 'var(--p1)',
+    weeks: [
+      {
+        label: '第一週',
+        days: [
+          {
+            day: 1, title: 'Shell 美化工具', tools: ['starship','eza','bat'],
+            tasks: [
+              { id: 'p1d1t1', text: '安裝 starship：brew install starship，並在 ~/.zshrc 加入 eval "$(starship init zsh)"', diff: 'easy' },
+              { id: 'p1d1t2', text: '安裝 eza：brew install eza，設定 alias ll="eza -la --git"', diff: 'easy' },
+              { id: 'p1d1t3', text: '安裝 bat：brew install bat，設定 alias cat="bat"', diff: 'easy' },
+              { id: 'p1d1t4', text: '重啟終端，確認 starship prompt 顯示 Git branch', diff: 'easy' },
+              { id: 'p1d1t5', text: '在 Java 專案執行 eza -la --git --tree --level=2，觀察結構', diff: 'easy' },
+              { id: 'p1d1t6', text: '用 bat pom.xml 或 bat build.gradle 看語法高亮', diff: 'easy' },
+            ],
+            code: `# 驗證安裝
+starship --version
+eza --version
+bat --version
+
+# 看專案結構
+eza -la --git --tree --level=2
+
+# 美化 pom.xml 輸出
+bat pom.xml`
+          },
+          {
+            day: 2, title: 'fzf 模糊搜尋（基礎）', tools: ['fzf'],
+            tasks: [
+              { id: 'p1d2t1', text: '安裝 fzf：brew install fzf && $(brew --prefix)/opt/fzf/install', diff: 'easy' },
+              { id: 'p1d2t2', text: '練習 Ctrl+R 搜尋歷史指令（搜尋你常用的 mvn 指令）', diff: 'easy' },
+              { id: 'p1d2t3', text: '在 Java 專案內練習 Ctrl+T 搜尋檔案（輸入 Service）', diff: 'easy' },
+              { id: 'p1d2t4', text: '設定 FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git" 讓 fzf 使用 fd 加速搜尋', diff: 'medium' },
+              { id: 'p1d2t5', text: '練習 fzf 多選模式：fzf -m（按 Tab 多選多個檔案，Enter 確認）', diff: 'medium' },
+              { id: 'p1d2t6', text: '在 ~/.zshrc 設定 FZF_DEFAULT_OPTS 加入 --height=40% --border --preview-window=right:50%', diff: 'easy' },
+            ],
+            code: `# 安裝 fzf shell 整合
+$(brew --prefix)/opt/fzf/install
+
+# 測試：按 Ctrl+R 輸入 mvn
+# 測試：按 Ctrl+T 輸入 Controller
+
+# 設定 ~/.zshrc
+export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+export FZF_DEFAULT_OPTS="--height=40% --border --preview-window=right:50%"
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# 多選
+fzf -m   # Tab 選多個，Enter 確認`
+          },
+          {
+            day: 3, title: 'fzf 進階組合', tools: ['fzf','bat'],
+            tasks: [
+              { id: 'p1d3t1', text: '練習 ls | fzf pipe 用法', diff: 'easy' },
+              { id: 'p1d3t2', text: '開啟 fzf preview 模式（搭配 bat）', diff: 'medium' },
+              { id: 'p1d3t3', text: '練習用 fzf 選取檔案再傳給其他指令（如 cat $(fzf)）', diff: 'medium' },
+              { id: 'p1d3t4', text: '練習 Alt+C 互動式 cd 到子目錄（fzf key binding）', diff: 'medium' },
+              { id: 'p1d3t5', text: '在 ~/.zshrc 建立函數 vf() { nvim $(fzf --preview "bat --color=always {}") }，用 vf 快速開啟任意檔案', diff: 'hard' },
+              { id: 'p1d3t6', text: '練習 ps aux | fzf 互動式搜尋行程，找到目標後複製 PID', diff: 'easy' },
+            ],
+            code: `# preview 模式
+fzf --preview 'bat --color=always {}'
+
+# 用 fzf 選檔案再開啟
+nvim $(fzf --preview 'bat --color=always {}')
+
+# 搜尋並 grep
+grep -r "pattern" $(fzf)`
+          },
+          {
+            day: 4, title: 'zoxide 智慧跳轉', tools: ['zoxide'],
+            tasks: [
+              { id: 'p1d4t1', text: '安裝 zoxide：brew install zoxide，在 ~/.zshrc 加入 eval "$(zoxide init zsh)"', diff: 'easy' },
+              { id: 'p1d4t2', text: '先用 cd 多跳幾個常用目錄，讓 zoxide 學習', diff: 'easy' },
+              { id: 'p1d4t3', text: '練習 z <部分路徑> 快速跳轉（如 z java-app）', diff: 'easy' },
+              { id: 'p1d4t4', text: '練習 zi 開啟互動選單', diff: 'easy' },
+            ],
+            code: `# 先讓 zoxide 學習你的目錄
+cd ~/projects/my-java-app
+cd ~/projects/backend
+cd ~/Downloads
+
+# 之後快速跳轉
+z java    # → ~/projects/my-java-app
+z back    # → ~/projects/backend
+zi        # → 互動選單`
+          },
+          {
+            day: 5, title: 'jenv Java 版本管理', tools: ['jenv'],
+            tasks: [
+              { id: 'p1d5t1', text: '確認 jenv 已安裝，執行 jenv versions 看已管理的 JDK', diff: 'easy' },
+              { id: 'p1d5t2', text: '在 ~/.zshrc 確認 export plugin 和 maven plugin 已啟用', diff: 'easy' },
+              { id: 'p1d5t3', text: '練習 jenv global 21 設定全域版本', diff: 'easy' },
+              { id: 'p1d5t4', text: '在一個專案目錄執行 jenv local 17，確認 java -version 顯示正確', diff: 'easy' },
+              { id: 'p1d5t5', text: '理解 .java-version 檔案的用途和作用範圍', diff: 'easy' },
+            ],
+            code: `# ~/.zshrc 必要設定
+export PATH="$HOME/.jenv/bin:$PATH"
+eval "$(jenv init -)"
+jenv enable-plugin export
+jenv enable-plugin maven
+
+# 版本操作
+jenv versions
+jenv global 21
+cd ~/projects/legacy && jenv local 17
+java -version    # 確認切換成功
+cat .java-version  # 看自動建立的檔案`
+          },
+          {
+            day: 6, title: 'jq JSON 處理', tools: ['jq'],
+            tasks: [
+              { id: 'p1d6t1', text: '安裝 jq：brew install jq', diff: 'easy' },
+              { id: 'p1d6t2', text: '練習 jq . 格式化 JSON（pipe 和 檔案模式）', diff: 'easy' },
+              { id: 'p1d6t3', text: '練習擷取特定欄位：jq \'.name\' 和 jq \'.users[]\' ', diff: 'medium' },
+              { id: 'p1d6t4', text: '練習 jq 過濾：jq \'.[] | select(.status == "active")\' ', diff: 'medium' },
+              { id: 'p1d6t5', text: '練習 jq map 轉換：jq \'[.[] | {id: .id, name: .name}]\' 重新整形陣列', diff: 'medium' },
+              { id: 'p1d6t6', text: '練習 jq 計算：jq \'[.[].price] | add\' 對陣列欄位求和', diff: 'hard' },
+              { id: 'p1d6t7', text: '實際應用：curl localhost:8080/actuator/env | jq \'.propertySources[].properties\' 解析 Spring Boot 環境設定', diff: 'medium' },
+            ],
+            code: `# 基礎操作
+echo '{"name":"Jason","age":30}' | jq .
+echo '{"name":"Jason","age":30}' | jq '.name'
+echo '{"name":"Jason","age":30}' | jq '.age'
+
+# map 與轉換
+echo '[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}]' | jq '[.[] | {id,name}]'
+
+# 計算
+echo '[{"price":10},{"price":20}]' | jq '[.[].price] | add'
+
+# select 過濾
+echo '[{"status":"active","name":"A"},{"status":"inactive","name":"B"}]' | \
+  jq '.[] | select(.status == "active") | .name'
+
+# 陣列操作
+echo '[{"id":1},{"id":2}]' | jq '.[].id'
+
+# 實際場景：格式化 API 回應
+curl -s https://api.github.com/users/octocat | jq '{name: .name, repos: .public_repos}'`
+          },
+          {
+            day: 7, title: 'httpie REST API 測試', tools: ['httpie','jq'],
+            tasks: [
+              { id: 'p1d7t1', text: '安裝 httpie：brew install httpie', diff: 'easy' },
+              { id: 'p1d7t2', text: '啟動你的 Spring Boot 專案，用 http GET localhost:8080/actuator/health 測試', diff: 'medium' },
+              { id: 'p1d7t3', text: '練習 POST 請求帶 JSON body', diff: 'medium' },
+              { id: 'p1d7t4', text: '組合使用：http GET ... | jq \'.[].name\' ', diff: 'medium' },
+            ],
+            code: `# GET 請求
+http GET localhost:8080/actuator/health
+http GET localhost:8080/api/users
+
+# POST with JSON
+http POST localhost:8080/api/users name="Jason" email="jason@wtmec.com"
+
+# 帶 header
+http GET localhost:8080/api/data Authorization:"Bearer token123"
+
+# 組合 jq
+http GET localhost:8080/api/products | jq '.[].name'`
+          },
+        ]
+      },
+      {
+        label: '第二週 — 複習與強化',
+        days: [
+          {
+            day: 8, title: 'Phase 1 總複習', tools: ['all'],
+            tasks: [
+              { id: 'p1d8t1', text: '確認 starship prompt 顯示 Git branch 和 Java 版本', diff: 'easy' },
+              { id: 'p1d8t2', text: '所有 alias 正常運作（ll, cat, lg, ld）', diff: 'easy' },
+              { id: 'p1d8t3', text: 'Ctrl+R 搜尋歷史、Ctrl+T 搜尋檔案都很順手', diff: 'easy' },
+              { id: 'p1d8t4', text: '可以用 z 跳轉常用目錄，不再輸入完整路徑', diff: 'easy' },
+              { id: 'p1d8t5', text: '用 jenv local 在不同專案切換 Java 版本', diff: 'easy' },
+              { id: 'p1d8t6', text: '用 http + jq 完整測試一個 API endpoint', diff: 'medium' },
+            ]
+          },
+          {
+            day: 9, title: 'Shell 基礎補強', tools: ['zsh'],
+            tasks: [
+              { id: 'p1d9t1', text: '理解 pipe（|）、重定向（>、>>）的用法', diff: 'easy' },
+              { id: 'p1d9t2', text: '學習 grep 基本用法（在 log 中搜尋 ERROR）', diff: 'easy' },
+              { id: 'p1d9t3', text: '學習 find 基本用法（find . -name "*.java"）', diff: 'easy' },
+              { id: 'p1d9t4', text: '學習 tail -f 追蹤 log 檔案', diff: 'easy' },
+              { id: 'p1d9t5', text: '寫第一個 shell script：把常用的 mvn 指令序列包成 script', diff: 'medium' },
+              { id: 'p1d9t6', text: '學習 ps aux | grep java 找執行中的 Java 行程，取得 PID', diff: 'easy' },
+              { id: 'p1d9t7', text: '學習 kill PID 和 kill -9 PID 終止行程，理解 SIGTERM vs SIGKILL', diff: 'easy' },
+              { id: 'p1d9t8', text: '學習 & 背景執行指令（如 mvn compile &），搭配 jobs、fg、bg 管理', diff: 'medium' },
+              { id: 'p1d9t9', text: '理解環境變數：export 設定、env 查看、.env 檔案搭配 source 載入', diff: 'medium' },
+            ],
+            code: `# 常用 shell 組合技
+grep -r "ERROR" ./logs/ | tail -20
+find . -name "*.java" | xargs grep "TODO"
+tail -f app.log | grep "Exception"
+
+# 行程管理
+ps aux | grep java      # 找 Java 行程
+kill 12345              # 正常終止（SIGTERM）
+kill -9 12345           # 強制終止（SIGKILL）
+
+# 背景執行
+mvn clean compile &     # 背景建構
+jobs                    # 查看背景任務
+fg %1                   # 把任務拉到前台
+
+# 環境變數
+export JAVA_OPTS="-Xmx512m"
+env | grep JAVA         # 查看 Java 相關變數
+source .env             # 載入 .env 檔案
+
+# 簡單 script
+#!/bin/bash
+set -e                  # 任何錯誤即停止
+cd ~/projects/my-app
+git pull
+mvn -T4 clean install -DskipTests
+echo "Build done!"`
+          },
+          {
+            day: 10, title: 'Regex 基礎（Vim 搜尋前必學）', tools: ['regex'],
+            tasks: [
+              { id: 'p1d10t1', text: '理解 . * + ? 基本 metacharacters', diff: 'easy' },
+              { id: 'p1d10t2', text: '學習字元類 [a-z] [0-9] \\d \\w \\s', diff: 'easy' },
+              { id: 'p1d10t3', text: '學習錨點 ^ $ \\b', diff: 'easy' },
+              { id: 'p1d10t4', text: '在 grep 中練習 regex：grep -E "Error|Exception" log.txt', diff: 'medium' },
+              { id: 'p1d10t5', text: '理解 greedy vs lazy matching（.*  vs .*?）', diff: 'medium' },
+            ],
+            code: `# grep 練習 regex
+grep -E "\\d{4}-\\d{2}-\\d{2}" logfile.txt   # 找日期
+grep -E "Exception|Error" app.log | head -20
+grep -v "^#" config.properties               # 排除註解行
+grep -rn "TODO|FIXME" src/                   # 找待辦事項
+
+# Vim 中的 regex 搜尋（之後會用到）
+# /Error\|Exception    → 搜尋 Error 或 Exception
+# /\\d\\+              → 搜尋一個以上的數字`
+          },
+          {
+            day: 11, title: 'ripgrep & fd（LazyVim 依賴）', tools: ['ripgrep','fd'],
+            tasks: [
+              { id: 'p1d11t1', text: '安裝：brew install ripgrep fd', diff: 'easy' },
+              { id: 'p1d11t2', text: '練習 rg "pattern" 在 Java 專案搜尋（比 grep -r 快很多）', diff: 'easy' },
+              { id: 'p1d11t3', text: '練習 fd .java 搜尋特定類型檔案', diff: 'easy' },
+              { id: 'p1d11t4', text: '理解為什麼 LazyVim 需要這兩個工具', diff: 'easy' },
+              { id: 'p1d11t5', text: '練習 rg -g "!target/" "!.git/" pattern 排除建構目錄和 Git 目錄', diff: 'medium' },
+              { id: 'p1d11t6', text: '練習 fd -e java -x wc -l 對所有 Java 檔案計算行數', diff: 'hard' },
+              { id: 'p1d11t7', text: '建立 ~/.ripgreprc 設定檔，加入 --smart-case 和 --hidden，設定 RIPGREP_CONFIG_PATH', diff: 'medium' },
+            ],
+            code: `# ripgrep：全專案搜尋
+rg "UserService"                    # 找所有包含 UserService 的位置
+rg "@RestController"                # 找所有 Controller
+rg -l "TODO"                        # 只列出檔案名稱
+rg -t java "Exception"              # 只搜尋 .java 檔
+rg -g "!target/" -g "!.git/" "pattern"  # 排除目錄
+
+# ~/.ripgreprc 設定
+--smart-case
+--hidden
+--glob=!.git/
+--glob=!target/
+
+export RIPGREP_CONFIG_PATH=~/.ripgreprc
+
+# fd：找檔案
+fd -e java                  # 找所有 Java 檔（用副檔名）
+fd Controller               # 找名稱含 Controller 的檔案
+fd -e xml pom               # 找 pom.xml
+fd -e java -x wc -l         # 對每個 Java 檔統計行數`
+          },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'p2', label: 'Phase 2', title: 'Neovim 核心操作', duration: '第 3–5 週',
+    color: 'var(--p2)',
+    weeks: [
+      {
+        label: '第三週 — Vim 基礎（最重要）',
+        days: [
+          {
+            day: 12, title: 'Vim 模式基礎 + vimtutor', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d12t1', text: '安裝 Neovim：brew install neovim', diff: 'easy' },
+              { id: 'p2d12t2', text: '完整走一遍 vimtutor（在終端輸入 vimtutor）', diff: 'medium' },
+              { id: 'p2d12t3', text: '理解 Normal / Insert / Visual / Command-line 四種模式', diff: 'medium' },
+              { id: 'p2d12t4', text: '練習 i a o O 四種進入 Insert 的方式', diff: 'easy' },
+              { id: 'p2d12t5', text: '練習 Esc 和 Ctrl+[ 回到 Normal 模式', diff: 'easy' },
+            ],
+            code: `# 啟動 Vim 內建教學（大約 30 分鐘）
+vimtutor
+
+# 或用英文版
+LANG=en vimtutor`
+          },
+          {
+            day: 13, title: 'Vim 移動動作', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d13t1', text: '用 h/j/k/l 移動，完全不碰方向鍵', diff: 'medium' },
+              { id: 'p2d13t2', text: '練習 w b e 跨字移動', diff: 'medium' },
+              { id: 'p2d13t3', text: '練習 0 ^ $ 行首/行尾', diff: 'easy' },
+              { id: 'p2d13t4', text: '練習 gg G 跳到檔案頭尾', diff: 'easy' },
+              { id: 'p2d13t5', text: '練習 Ctrl+d Ctrl+u 半頁捲動', diff: 'easy' },
+              { id: 'p2d13t6', text: '練習 { } 跨段落跳轉', diff: 'medium' },
+            ],
+            code: `# 在 Neovim 中練習（開啟任意 Java 檔）
+nvim src/main/java/com/example/UserService.java
+
+# 用 :help motion 查看所有移動方式
+# 用 :set relativenumber 看相對行號（方便 5j 跳 5 行）`
+          },
+          {
+            day: 14, title: 'Vim 編輯操作', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d14t1', text: '練習 x dd yy p 刪字/刪行/複製/貼上', diff: 'easy' },
+              { id: 'p2d14t2', text: '練習 u Ctrl+r Undo/Redo', diff: 'easy' },
+              { id: 'p2d14t3', text: '練習數字操作：3dd 刪 3 行，5yy 複製 5 行', diff: 'medium' },
+              { id: 'p2d14t4', text: '練習 r 單字替換（不進 Insert 模式）', diff: 'easy' },
+              { id: 'p2d14t5', text: '練習 . 重複上一個操作（非常有用！）', diff: 'medium' },
+            ],
+            code: `# 必學的 Vim 編輯組合
+dd      # 刪除一行
+3dd     # 刪除 3 行
+yy      # 複製一行
+p       # 在下方貼上
+P       # 在上方貼上
+u       # Undo
+Ctrl+r  # Redo
+.       # 重複上一個操作（極常用）`
+          },
+          {
+            day: 15, title: 'Vim 搜尋與替換', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d15t1', text: '練習 /pattern 向下搜尋，n/N 切換結果', diff: 'easy' },
+              { id: 'p2d15t2', text: '練習 * 搜尋游標下的單字', diff: 'easy' },
+              { id: 'p2d15t3', text: '練習 :%s/old/new/g 全文替換', diff: 'medium' },
+              { id: 'p2d15t4', text: '練習 :%s/old/new/gc 逐個確認替換', diff: 'medium' },
+              { id: 'p2d15t5', text: '學習 :nohl 清除搜尋高亮', diff: 'easy' },
+            ],
+            code: `# Vim 搜尋與替換
+/UserService     # 搜尋 UserService
+n                # 下一個
+N                # 上一個
+*                # 搜尋游標下的單字
+
+# 替換
+:%s/oldName/newName/g     # 全文替換（不確認）
+:%s/oldName/newName/gc    # 全文替換（逐個確認）
+:10,20s/old/new/g         # 只替換 10-20 行`
+          },
+        ]
+      },
+      {
+        label: '第四週 — Text Objects + LazyVim',
+        days: [
+          {
+            day: 16, title: 'Vim Text Objects（精華！）', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d16t1', text: '練習 ci" ca" 修改字串引號內/含引號', diff: 'medium' },
+              { id: 'p2d16t2', text: '練習 ci( ca( 修改括號內/含括號', diff: 'medium' },
+              { id: 'p2d16t3', text: '練習 cib cab 修改 {} 內/含 {}（Java 方法體！）', diff: 'medium' },
+              { id: 'p2d16t4', text: '練習 viw vaw 選取單字', diff: 'easy' },
+              { id: 'p2d16t5', text: '練習 ci< 修改 HTML/XML tag 內容', diff: 'medium' },
+            ],
+            code: `# Text Objects 語法：<action><inside/around><object>
+# action: c(change) d(delete) y(yank) v(visual select)
+# inside: i  around: a
+
+ciw    # 修改一個單字
+ci"    # 修改 "..." 裡面的內容
+ca"    # 修改 "..." 包含引號
+ci(    # 修改 (...) 裡面  ← 常用於方法參數
+cib    # 修改 {...} 裡面  ← 常用於方法體
+dit    # 刪除 HTML tag 內容
+yip    # 複製整個段落`
+          },
+          {
+            day: 17, title: '安裝 LazyVim', tools: ['lazyvim'],
+            tasks: [
+              { id: 'p2d17t1', text: '備份舊 nvim 設定：mv ~/.config/nvim ~/.config/nvim.bak', diff: 'easy' },
+              { id: 'p2d17t2', text: 'Clone LazyVim starter：git clone https://github.com/LazyVim/starter ~/.config/nvim', diff: 'easy' },
+              { id: 'p2d17t3', text: '執行 nvim，等待自動安裝所有 plugins', diff: 'easy' },
+              { id: 'p2d17t4', text: '確認沒有 error 訊息（用 :checkhealth 診斷）', diff: 'medium' },
+              { id: 'p2d17t5', text: '熟悉 which-key：按 Space 等一秒看到所有 keymaps', diff: 'medium' },
+            ],
+            code: `# 安裝步驟
+mv ~/.config/nvim ~/.config/nvim.bak
+git clone https://github.com/LazyVim/starter ~/.config/nvim
+rm -rf ~/.config/nvim/.git
+nvim  # 第一次啟動自動安裝
+
+# 安裝後確認
+:checkhealth         # 健康檢查
+:Lazy                # 查看 plugin 狀態
+:Mason               # 查看工具安裝狀態`
+          },
+          {
+            day: 18, title: 'LazyVim 核心導航', tools: ['lazyvim'],
+            tasks: [
+              { id: 'p2d18t1', text: '練習 <leader>ff 模糊搜尋檔案（leader = Space）', diff: 'easy' },
+              { id: 'p2d18t2', text: '練習 <leader>/ 全局搜尋內容（底層用 ripgrep）', diff: 'easy' },
+              { id: 'p2d18t3', text: '練習 <leader>e 開啟/關閉檔案樹（neo-tree）', diff: 'easy' },
+              { id: 'p2d18t4', text: '在 neo-tree 練習 a（新增）r（重命名）d（刪除）', diff: 'medium' },
+              { id: 'p2d18t5', text: '練習 <leader>xx 開啟錯誤面板（trouble.nvim）', diff: 'easy' },
+              { id: 'p2d18t6', text: '練習 <leader>cf 格式化當前檔案', diff: 'easy' },
+            ]
+          },
+          {
+            day: 19, title: 'Buffer 和 Window 管理', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d19t1', text: '練習 <leader>, 切換 buffer（開多個檔案）', diff: 'easy' },
+              { id: 'p2d19t2', text: '練習 <leader>bd 關閉當前 buffer', diff: 'easy' },
+              { id: 'p2d19t3', text: '練習 Ctrl+w v 垂直分割 window', diff: 'easy' },
+              { id: 'p2d19t4', text: '練習 Ctrl+w h/l 在 window 之間移動', diff: 'easy' },
+              { id: 'p2d19t5', text: '練習情境：左邊看 Service.java，右邊改 Controller.java', diff: 'medium' },
+            ],
+            code: `# Buffer 操作
+:e filename.java    # 開啟檔案
+<leader>,           # 切換 buffer（互動選單）
+<leader>bd          # 關閉當前 buffer
+:buffers            # 列出所有 buffers
+
+# Window 分割
+Ctrl+w v   # 垂直分割
+Ctrl+w s   # 水平分割
+Ctrl+w h/j/k/l  # 移動到鄰近 window
+Ctrl+w =   # 讓所有 window 等寬`
+          },
+          {
+            day: 20, title: 'Vim Macros 自動化', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d20t1', text: '理解 macro 的概念：錄製一段操作，重複執行', diff: 'medium' },
+              { id: 'p2d20t2', text: '練習 qa 開始錄製到 register a，q 結束錄製', diff: 'medium' },
+              { id: 'p2d20t3', text: '練習 @a 執行 macro，@@ 重複上一個 macro', diff: 'medium' },
+              { id: 'p2d20t4', text: '練習用 macro 批次處理：100@a 執行 100 次', diff: 'hard' },
+              { id: 'p2d20t5', text: '實際應用：用 macro 把一列 import 轉換格式', diff: 'hard' },
+            ],
+            code: `# Macro 操作流程
+qa         # 開始錄製，存到 register a
+# ... 做一系列操作 ...
+q          # 結束錄製
+
+@a         # 執行 register a 的 macro
+@@         # 重複上次 macro
+5@a        # 執行 5 次
+
+# 查看 register 內容
+:reg a`
+          },
+        ]
+      },
+      {
+        label: '第五週 — 鞏固 Neovim',
+        days: [
+          {
+            day: 21, title: 'Vim Registers 剪貼板', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d21t1', text: '理解 Vim 的多個 register（a-z, 0-9, ", +, *）', diff: 'medium' },
+              { id: 'p2d21t2', text: '練習 "+y 複製到系統剪貼板，"+p 從系統剪貼板貼上', diff: 'medium' },
+              { id: 'p2d21t3', text: '練習 "0p 貼上最後一次 yank 的內容（不受 delete 影響）', diff: 'hard' },
+              { id: 'p2d21t4', text: '理解為什麼 d（delete）會覆蓋預設 register', diff: 'medium' },
+              { id: 'p2d21t5', text: '學習 "_ 黑洞 register："_dd 刪除一行但不污染任何 register', diff: 'medium' },
+              { id: 'p2d21t6', text: '練習 Ctrl+r 在 Insert 模式插入 register 內容（如 Ctrl+r 0 貼上上次 yank）', diff: 'hard' },
+            ],
+            code: `# Register 操作
+"+y   # 複製到系統剪貼板
+"+p   # 從系統剪貼板貼上
+"0p   # 貼上最後一次 yank（不被 delete 污染）
+"ayy  # 複製到 register a
+"ap   # 從 register a 貼上
+:reg  # 查看所有 register 內容`
+          },
+          {
+            day: 22, title: 'Neovim 用於真實工作', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d22t1', text: '今天開始，用 Neovim 處理真實的 Java 專案任務（即使很慢也沒關係）', diff: 'hard' },
+              { id: 'p2d22t2', text: '遇到困難就查 :help，不要馬上切回 IntelliJ', diff: 'medium' },
+              { id: 'p2d22t3', text: '記錄今天卡住的地方，明天解決', diff: 'easy' },
+              { id: 'p2d22t4', text: '強迫自己用 <leader>ff 開檔、gd/gr 瀏覽程式碼，不碰滑鼠', diff: 'hard' },
+              { id: 'p2d22t5', text: '忘記 keymap 時，按 Space 等一秒讓 which-key 顯示提示，不要 Google', diff: 'medium' },
+              { id: 'p2d22t6', text: '今天至少完成一個真實的 commit，全程在終端內用 lazygit 完成', diff: 'hard' },
+            ]
+          },
+          {
+            day: 23, title: '持續練習日', tools: ['nvim'],
+            tasks: [
+              { id: 'p2d23t1', text: '解決昨天卡住的操作，查找對應 keymap', diff: 'medium' },
+              { id: 'p2d23t2', text: '練習一個新的 text object 或 motion（查 :help motion）', diff: 'medium' },
+              { id: 'p2d23t3', text: 'Phase 2 總結：確認不用滑鼠可完成基本編輯', diff: 'medium' },
+              { id: 'p2d23t4', text: '練習 mini.surround：ysw" 在單字加引號、ds" 刪引號、cs"( 改成括號', diff: 'hard' },
+              { id: 'p2d23t5', text: '確認 ci" ci( cib 等 text objects 已形成肌肉記憶，不需查 cheatsheet', diff: 'medium' },
+              { id: 'p2d23t6', text: '挑戰：只用鍵盤，在 20 分鐘內完成一個小功能（新增一個方法）', diff: 'hard' },
+            ],
+            code: `# mini.surround 操作
+ysw"    # 在游標單字加雙引號
+ys$"    # 從游標到行尾加引號
+ds"     # 刪除周圍的雙引號
+cs"(    # 把 "..." 改成 (...)
+yss)    # 整行加括號
+
+# 複合操作練習
+yiwp    # 複製單字，貼到其他位置
+dip     # 刪除整個段落（含空行）
+=ip     # 格式化整個段落（自動縮排）
+
+# 速度測試：計時完成這些操作
+# 1. 把一個 String 型別的方法參數名稱改掉（ciw）
+# 2. 把一整個方法簽名包在新方法裡（V 選取 + ys + block）
+# 3. 把 "text" 改成 'text'（cs"'）`
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'p3', label: 'Phase 3', title: 'LazyVim + Java 開發', duration: '第 6–8 週',
+    color: 'var(--p3)',
+    weeks: [
+      {
+        label: '第六週 — Java LSP 啟動',
+        days: [
+          {
+            day: 24, title: '啟用 Java Extra + jdtls', tools: ['jdtls','lazyvim'],
+            tasks: [
+              { id: 'p3d24t1', text: '在 Neovim 執行 :LazyExtras，找到 lang.java 按 x 啟用', diff: 'easy' },
+              { id: 'p3d24t2', text: '同時啟用 dap.core（Debug 支援）', diff: 'easy' },
+              { id: 'p3d24t3', text: '重啟 Neovim，等待 Mason 自動安裝 jdtls', diff: 'easy' },
+              { id: 'p3d24t4', text: '開啟 Java 專案：cd <project> && nvim .', diff: 'easy' },
+              { id: 'p3d24t5', text: '開啟 .java 檔，執行 :LspInfo 確認 jdtls 顯示 active', diff: 'medium' },
+              { id: 'p3d24t6', text: '等待底部狀態列的 ⚙ Indexing... 消失（代表 jdtls 就緒）', diff: 'easy' },
+            ],
+            code: `# 啟用方式 1：互動式
+:LazyExtras
+# 找 lang.java → 按 x
+# 找 dap.core → 按 x
+
+# 啟用方式 2：設定檔
+-- ~/.config/nvim/lua/config/lazy.lua
+{ import = "lazyvim.plugins.extras.lang.java" },
+{ import = "lazyvim.plugins.extras.dap.core" },
+
+# 確認狀態
+:LspInfo      # 應看到 jdtls active
+:Mason        # 確認 jdtls, java-debug-adapter, java-test 已安裝`
+          },
+          {
+            day: 25, title: 'LSP 導航操作', tools: ['jdtls'],
+            tasks: [
+              { id: 'p3d25t1', text: '練習 gd 跳到定義（Goto Definition）', diff: 'easy' },
+              { id: 'p3d25t2', text: '練習 gr 找所有引用（Find References）', diff: 'easy' },
+              { id: 'p3d25t3', text: '練習 gI 跳到介面實作（Goto Implementation）', diff: 'easy' },
+              { id: 'p3d25t4', text: '練習 K 顯示 Hover 文件（Javadoc）', diff: 'easy' },
+              { id: 'p3d25t5', text: '練習 Ctrl+o Ctrl+i 跳轉歷史（back/forward）', diff: 'medium' },
+              { id: 'p3d25t6', text: '今天目標：不用搜尋，直接用 gd/gr 瀏覽整個 Service 層', diff: 'hard' },
+            ],
+            code: `# LSP 導航快捷鍵
+gd          # Goto Definition（跳到定義）
+gr          # Find References（找引用）
+gI          # Goto Implementation（跳到實作）
+K           # Hover 文件（Javadoc）
+<leader>cgs # Goto Superclass
+<leader>cgS # Goto Test Subject
+Ctrl+o      # 跳回上一個位置
+Ctrl+i      # 跳到下一個位置`
+          },
+          {
+            day: 26, title: 'LSP Code Actions', tools: ['jdtls'],
+            tasks: [
+              { id: 'p3d26t1', text: '練習 <leader>cr 重新命名變數/方法（Rename）', diff: 'medium' },
+              { id: 'p3d26t2', text: '練習 <leader>ca 查看 Code Actions（自動 import、產生方法等）', diff: 'medium' },
+              { id: 'p3d26t3', text: '練習 <leader>co 整理 imports（Organize Imports）', diff: 'easy' },
+              { id: 'p3d26t4', text: '練習 <leader>cf 格式化 Java 程式碼', diff: 'easy' },
+              { id: 'p3d26t5', text: '實作練習：新增一個方法，讓 Code Action 自動生成 @Override', diff: 'hard' },
+            ]
+          },
+          {
+            day: 27, title: 'Java 重構操作', tools: ['jdtls'],
+            tasks: [
+              { id: 'p3d27t1', text: '練習 <leader>cxv Extract Variable（把複雜表達式抽成變數）', diff: 'medium' },
+              { id: 'p3d27t2', text: '練習 <leader>cxm Extract Method（Visual 選取幾行 → 抽成新方法）', diff: 'hard' },
+              { id: 'p3d27t3', text: '練習 <leader>cxc Extract Constant（把魔法數字抽成常數）', diff: 'medium' },
+              { id: 'p3d27t4', text: '找一段真實的複雜方法，用重構功能拆分它', diff: 'hard' },
+            ],
+            code: `# 重構快捷鍵
+<leader>cxv   # Extract Variable（游標在表達式上）
+<leader>cxm   # Extract Method（先 Visual 選取要抽取的程式碼）
+<leader>cxc   # Extract Constant
+
+# 練習場景
+# 1. 找一個有複雜計算的方法
+# 2. 把計算結果用 cxv 抽成有意義的變數名
+# 3. 把一段邏輯用 Visual + cxm 抽成新方法`
+          },
+        ]
+      },
+      {
+        label: '第七週 — Symbol 搜尋 + lazygit',
+        days: [
+          {
+            day: 28, title: 'Symbol 搜尋', tools: ['telescope'],
+            tasks: [
+              { id: 'p3d28t1', text: '練習 <leader>ss 搜尋當前檔案的 symbols（方法、欄位）', diff: 'easy' },
+              { id: 'p3d28t2', text: '練習 <leader>sS 搜尋整個專案的 symbols（類別、Enum、Interface）', diff: 'easy' },
+              { id: 'p3d28t3', text: '練習用 symbol 搜尋快速跳到某個方法', diff: 'easy' },
+              { id: 'p3d28t4', text: '練習 <leader>sd 搜尋當前診斷警告（Diagnostics），快速定位問題', diff: 'easy' },
+              { id: 'p3d28t5', text: '練習 <leader>sk 搜尋所有 keymaps（忘記快捷鍵時自救）', diff: 'easy' },
+              { id: 'p3d28t6', text: '練習 <leader>sh 搜尋 help 文件（查 Neovim 內建文件）', diff: 'easy' },
+              { id: 'p3d28t7', text: '挑戰：不用 grep，只用 <leader>ss 和 <leader>sS 找到專案內所有 @Service 類別', diff: 'medium' },
+            ],
+            code: `# Telescope Symbol 搜尋快捷鍵
+<leader>ss   # 搜尋當前檔案 symbols（方法、欄位、類別）
+<leader>sS   # 搜尋工作區所有 symbols（跨檔案）
+<leader>sd   # 搜尋診斷（Diagnostics warnings/errors）
+<leader>sk   # 搜尋所有 keymaps
+<leader>sh   # 搜尋 help 文件
+<leader>sr   # 搜尋最近開啟的檔案
+<leader>sg   # 全域 grep（Telescope live grep）
+<leader>sw   # 搜尋游標下的單字
+
+# 在 Telescope 選單中：
+# Ctrl+n / Ctrl+p  上下移動
+# Ctrl+v           垂直分割開啟
+# Ctrl+x           水平分割開啟
+# Tab              多選標記`
+          },
+          {
+            day: 29, title: 'lazygit 整合', tools: ['lazygit'],
+            tasks: [
+              { id: 'p3d29t1', text: '安裝 lazygit：brew install lazygit，設定 alias lg="lazygit"', diff: 'easy' },
+              { id: 'p3d29t2', text: '在 Neovim 內按 <leader>gg 開啟 lazygit', diff: 'easy' },
+              { id: 'p3d29t3', text: '練習在 Files 區用 Space 暫存/取消暫存', diff: 'easy' },
+              { id: 'p3d29t4', text: '練習 c 輸入 commit message 並 commit', diff: 'easy' },
+              { id: 'p3d29t5', text: '練習 P push，d 查看 diff', diff: 'easy' },
+              { id: 'p3d29t6', text: '完整走一次 commit 流程，全程不離開終端', diff: 'medium' },
+            ],
+            code: `# lazygit 操作流程
+<leader>gg  # 從 Neovim 開啟 lazygit
+
+# lazygit 內的操作
+Space       # 暫存/取消暫存檔案
+c           # commit（輸入 commit message）
+P           # push
+d           # 查看 diff
+p           # pull
+b           # 切換 branch
+?           # 查看所有快捷鍵
+q           # 離開 lazygit`
+          },
+          {
+            day: 30, title: 'Maven/Gradle 終端工作流', tools: ['maven','gradle'],
+            tasks: [
+              { id: 'p3d30t1', text: '學習 mvn compile test package 基本生命週期', diff: 'easy' },
+              { id: 'p3d30t2', text: '學習 mvn -T4 clean install（多執行緒加速）', diff: 'easy' },
+              { id: 'p3d30t3', text: '學習 mvn dependency:tree 查看依賴', diff: 'easy' },
+              { id: 'p3d30t4', text: '練習在 tmux 的右側 pane 執行 mvn，左側繼續用 Neovim', diff: 'medium' },
+              { id: 'p3d30t5', text: '設定 Maven alias：mci, mct, mcpkg', diff: 'easy' },
+            ],
+            code: `# ~/.zshrc Maven alias
+alias mci="mvn -T4 clean install"
+alias mct="mvn clean test"
+alias mcpkg="mvn clean package -DskipTests"
+
+# 常用 Maven 指令
+mvn compile                    # 編譯
+mvn test                       # 執行所有測試
+mvn test -Dtest=UserServiceTest # 指定測試
+mvn spring-boot:run            # 啟動 Spring Boot
+mvn dependency:tree            # 查依賴樹
+mvn -T4 clean install          # 多執行緒建構`
+          },
+          {
+            day: 31, title: 'Lombok 支援確認', tools: ['lombok','jdtls'],
+            tasks: [
+              { id: 'p3d31t1', text: '確認 Mason 自動安裝了 lombok.jar（:Mason 查看 java-debug-adapter）', diff: 'easy' },
+              { id: 'p3d31t2', text: '開啟有 @Data @Builder @Slf4j 的類別，確認 LSP 可以找到生成的方法', diff: 'medium' },
+              { id: 'p3d31t3', text: '練習用 gd 跳到 @Builder 的 builder() 方法（應跳到 Lombok 生成的位置）', diff: 'medium' },
+              { id: 'p3d31t4', text: '確認 @Slf4j 的 log 變數有自動補全（輸入 log. 看到 info/debug/error 等方法）', diff: 'medium' },
+              { id: 'p3d31t5', text: '確認 @Value @RequiredArgsConstructor 注入的 field 有正確 LSP 支援', diff: 'medium' },
+              { id: 'p3d31t6', text: '若 LSP 找不到 Lombok 生成的方法，確認 jdtls 設定中 lombok.jar 路徑正確', diff: 'hard' },
+            ],
+            code: `# 確認 Lombok 正確啟用
+:Mason          # 查看已安裝工具
+:LspInfo        # 確認 jdtls 顯示 active
+
+# jdtls 需要的 Lombok 設定（LazyVim lang.java 已自動處理）
+# 若有問題，在 ~/.config/nvim/lua/plugins/java.lua 確認：
+-- jdtls 設定中應包含 lombok agent
+-- "-javaagent:/path/to/lombok.jar"
+
+# 測試 Lombok 支援
+# 1. 開啟有 @Data 的 Entity 類別
+# 2. 在其他類別用 entity.get   → 應該看到 getter 補全
+# 3. 在 @Builder 類別用 MyClass.builder(). → 應該看到 builder 方法
+# 4. 使用 @Slf4j 的類別：log.  → 應看到 info/debug/error`
+          },
+        ]
+      },
+      {
+        label: '第八週 — 鞏固 Java 開發流程',
+        days: [
+          {
+            day: 32, title: '完整 Java 開發流程練習', tools: ['all'],
+            tasks: [
+              { id: 'p3d32t1', text: '今天用純終端完成一個小功能（新增 API endpoint）', diff: 'hard' },
+              { id: 'p3d32t2', text: '全程使用 Neovim 編輯、LSP 補全和跳轉', diff: 'hard' },
+              { id: 'p3d32t3', text: '用 http + jq 測試自己寫的 API', diff: 'medium' },
+              { id: 'p3d32t4', text: '用 lazygit commit 和 push', diff: 'medium' },
+              { id: 'p3d32t5', text: '用 neotest 執行剛寫好的測試，確認 API 行為正確', diff: 'medium' },
+              { id: 'p3d32t6', text: '如果遇到 bug，用 DAP 設中斷點排查，不用 System.out.println', diff: 'hard' },
+              { id: 'p3d32t7', text: '回顧今天的流程：哪些操作還不夠順手？記錄下來明天練習', diff: 'easy' },
+            ]
+          },
+          {
+            day: 33, title: 'Phase 3 檢查清單', tools: ['review'],
+            tasks: [
+              { id: 'p3d33t1', text: 'gd、gr、gI 每天都在用，不再 grep 搜尋', diff: 'easy' },
+              { id: 'p3d33t2', text: '能用 <leader>cr rename，不再手動搜尋替換', diff: 'easy' },
+              { id: 'p3d33t3', text: 'Extract Method 可以熟練操作', diff: 'medium' },
+              { id: 'p3d33t4', text: 'commit 全程用 lazygit，不再用 CLI git add/commit', diff: 'easy' },
+              { id: 'p3d33t5', text: '能在不用滑鼠的情況下完成一個完整的 Java 功能', diff: 'hard' },
+              { id: 'p3d33t6', text: 'Symbol 搜尋（<leader>ss/sS）已取代 IDE 的 Outline 面板', diff: 'medium' },
+              { id: 'p3d33t7', text: 'lazygit 已成為 commit 的唯一工具，不再用 git add/commit 指令', diff: 'easy' },
+              { id: 'p3d33t8', text: '評估自己的速度：現在用 Neovim 開發，比 IntelliJ 慢多少？目標：等速', diff: 'hard' },
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'p4', label: 'Phase 4', title: 'tmux 工作區整合', duration: '第 9 週',
+    color: 'var(--p4)',
+    weeks: [
+      {
+        label: '第九週',
+        days: [
+          {
+            day: 34, title: 'tmux 安裝與基本操作', tools: ['tmux'],
+            tasks: [
+              { id: 'p4d34t1', text: '安裝 tmux：brew install tmux', diff: 'easy' },
+              { id: 'p4d34t2', text: '設定 ~/.tmux.conf（mouse on，分割快捷鍵）', diff: 'easy' },
+              { id: 'p4d34t3', text: '練習 Ctrl+b | 垂直分割（需要設定）', diff: 'easy' },
+              { id: 'p4d34t4', text: '練習 Ctrl+b 方向鍵 在 pane 之間移動', diff: 'easy' },
+              { id: 'p4d34t5', text: '練習 Ctrl+b z 最大化/還原 pane', diff: 'easy' },
+              { id: 'p4d34t6', text: '學習 tmux copy mode：Ctrl+b [ 進入，vi 模式用 v 選取、y 複製', diff: 'medium' },
+              { id: 'p4d34t7', text: '練習 Ctrl+b PageUp 向上滾動查看終端歷史輸出', diff: 'easy' },
+              { id: 'p4d34t8', text: '在 ~/.tmux.conf 設定 setw -g mode-keys vi 讓 copy mode 使用 vi 按鍵', diff: 'medium' },
+            ],
+            code: `# ~/.tmux.conf 完整設定
+set -g mouse on
+set -g default-terminal "tmux-256color"
+set -g history-limit 10000          # 增加 scrollback 緩衝
+setw -g mode-keys vi                # copy mode 使用 vi 按鍵
+
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+bind r source-file ~/.tmux.conf \; display "Config reloaded!"
+
+# vi copy mode 設定
+bind -T copy-mode-vi v send -X begin-selection
+bind -T copy-mode-vi y send -X copy-selection-and-cancel
+
+# 啟動 tmux session
+tmux new-session -s java-dev
+
+# copy mode 操作
+Ctrl+b [    # 進入 copy mode
+v           # 開始選取（vi 模式）
+y           # 複製選取內容
+q           # 離開 copy mode
+Ctrl+b ]    # 貼上`
+          },
+          {
+            day: 35, title: 'tmux Session & Window 管理', tools: ['tmux'],
+            tasks: [
+              { id: 'p4d35t1', text: '練習 Ctrl+b c 新增 window', diff: 'easy' },
+              { id: 'p4d35t2', text: '練習 Ctrl+b n/p 切換 window', diff: 'easy' },
+              { id: 'p4d35t3', text: '練習 Ctrl+b d detach 離開 session', diff: 'easy' },
+              { id: 'p4d35t4', text: '練習 tmux attach 重新進入 session', diff: 'easy' },
+              { id: 'p4d35t5', text: '理解 session > window > pane 的層級關係', diff: 'medium' },
+              { id: 'p4d35t6', text: '練習 tmux ls 列出所有 session，tmux kill-session -t name 清理舊 session', diff: 'easy' },
+              { id: 'p4d35t7', text: '練習 Ctrl+b $ 重新命名 session，Ctrl+b , 重新命名 window', diff: 'easy' },
+              { id: 'p4d35t8', text: '理解 detach 後 session 繼續執行：模擬 SSH 斷線後回來恢復工作', diff: 'medium' },
+            ]
+          },
+          {
+            day: 36, title: 'Java 工作區 Layout Script', tools: ['tmux'],
+            tasks: [
+              { id: 'p4d36t1', text: '建立 ~/scripts/dev-session.sh 腳本', diff: 'medium' },
+              { id: 'p4d36t2', text: '腳本自動開啟：左邊 Neovim，右上 build pane，右下 lazygit', diff: 'medium' },
+              { id: 'p4d36t3', text: '測試腳本：./dev-session.sh ~/projects/my-java-app', diff: 'medium' },
+              { id: 'p4d36t4', text: '設定 alias：alias dev="~/scripts/dev-session.sh"', diff: 'easy' },
+            ],
+            code: `#!/bin/bash
+# ~/scripts/dev-session.sh
+SESSION="java-dev"
+PROJECT=\${1:-~/projects/my-java-app}
+
+tmux new-session -d -s $SESSION -c $PROJECT
+tmux send-keys -t $SESSION "nvim ." Enter
+
+tmux split-window -h -t $SESSION -c $PROJECT
+tmux send-keys -t $SESSION "# build commands" Enter
+
+tmux split-window -v -t $SESSION -c $PROJECT
+tmux send-keys -t $SESSION "lazygit" Enter
+
+tmux select-pane -t $SESSION:0.0
+tmux attach-session -t $SESSION`
+          },
+          {
+            day: 37, title: 'tmux Plugin Manager (TPM)', tools: ['tpm','tmux'],
+            tasks: [
+              { id: 'p4d37t1', text: '安裝 TPM：git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm', diff: 'easy' },
+              { id: 'p4d37t2', text: '設定 ~/.tmux.conf 加入 TPM 啟動', diff: 'easy' },
+              { id: 'p4d37t3', text: '安裝 tmux-resurrect plugin（重開機恢復 session）', diff: 'medium' },
+              { id: 'p4d37t4', text: '練習 Ctrl+b Ctrl+s 儲存 session，Ctrl+b Ctrl+r 恢復', diff: 'medium' },
+              { id: 'p4d37t5', text: '安裝 tmux-continuum（set -g @continuum-restore on 自動恢復）', diff: 'medium' },
+              { id: 'p4d37t6', text: '安裝 tmux-yank（讓 copy mode 複製的內容自動同步到系統剪貼板）', diff: 'easy' },
+              { id: 'p4d37t7', text: '安裝 catppuccin-tmux 或 tokyo-night-tmux 主題，讓終端視覺一致', diff: 'easy' },
+            ],
+            code: `# ~/.tmux.conf 加入
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-sensible'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @plugin 'tmux-plugins/tmux-yank'
+set -g @plugin 'catppuccin/tmux'
+
+set -g @continuum-restore 'on'       # 重開機自動恢復
+set -g @resurrect-strategy-nvim 'session'  # 恢復 Neovim session
+
+run '~/.tmux/plugins/tpm/tpm'
+
+# Plugin 操作
+Ctrl+b I   # 安裝 plugins
+Ctrl+b U   # 更新 plugins
+Ctrl+b alt+u  # 移除未使用的 plugins
+
+# tmux-resurrect
+Ctrl+b Ctrl+s  # 儲存 session
+Ctrl+b Ctrl+r  # 恢復 session`
+          },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'p5', label: 'Phase 5', title: 'Debug + Test Runner', duration: '第 10–11 週',
+    color: 'var(--p5)',
+    weeks: [
+      {
+        label: '第十週 — DAP Debug',
+        days: [
+          {
+            day: 38, title: 'Spring Boot Debug 模式啟動', tools: ['jdwp','maven'],
+            tasks: [
+              { id: 'p5d38t1', text: '學習 JDWP 協定：理解 Java remote debug 原理', diff: 'medium' },
+              { id: 'p5d38t2', text: '用 Maven 帶 debug port 啟動 Spring Boot（port 5005）', diff: 'medium' },
+              { id: 'p5d38t3', text: '確認 debug port 開啟：lsof -i :5005', diff: 'easy' },
+              { id: 'p5d38t4', text: '或用 Gradle：./gradlew bootRun --debug-jvm', diff: 'medium' },
+            ],
+            code: `# Maven 啟動 Debug Port
+mvn spring-boot:run \\
+  -Dspring-boot.run.jvmArguments=\\
+  "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+# Gradle
+./gradlew bootRun --debug-jvm
+
+# 確認 port 已開啟
+lsof -i :5005`
+          },
+          {
+            day: 39, title: 'nvim-dap 基本操作', tools: ['nvim-dap'],
+            tasks: [
+              { id: 'p5d39t1', text: '在 Service 層的方法內設定中斷點：<leader>db', diff: 'easy' },
+              { id: 'p5d39t2', text: 'Attach 到正在執行的 Spring Boot：<leader>dc 選 Attach', diff: 'medium' },
+              { id: 'p5d39t3', text: '用 httpie 發送請求觸發中斷點', diff: 'medium' },
+              { id: 'p5d39t4', text: '在中斷點處觀察變數值（nvim-dap-virtual-text 行內顯示）', diff: 'medium' },
+              { id: 'p5d39t5', text: '練習 Step Over (<leader>dO) 和 Step Into (<leader>di)', diff: 'medium' },
+              { id: 'p5d39t6', text: '開啟 DAP UI 面板：<leader>du', diff: 'easy' },
+            ],
+            code: `# Debug 操作快捷鍵
+<leader>db   # Toggle Breakpoint（設定/移除中斷點）
+<leader>dB   # Conditional Breakpoint（條件中斷點）
+<leader>dc   # Continue / 啟動（選 Attach）
+<leader>dO   # Step Over（執行下一行）
+<leader>di   # Step Into（進入方法內）
+<leader>do   # Step Out（跳出當前方法）
+<leader>dC   # Run to Cursor
+<leader>du   # Toggle DAP UI 面板
+<leader>dq   # 停止 Debug`
+          },
+          {
+            day: 40, title: 'Debug 進階：條件中斷點', tools: ['nvim-dap'],
+            tasks: [
+              { id: 'p5d40t1', text: '練習 <leader>dB 設定條件中斷點（只在特定條件停下）', diff: 'hard' },
+              { id: 'p5d40t2', text: '練習在 DAP UI 的 REPL 執行表達式', diff: 'hard' },
+              { id: 'p5d40t3', text: '完整 Debug 一個真實的 bug：從中斷點到找出問題', diff: 'hard' },
+              { id: 'p5d40t4', text: '學習 Exception Breakpoint：讓程式在丟出特定 Exception 時自動暫停（不需手動設中斷點）', diff: 'hard' },
+              { id: 'p5d40t5', text: '練習 Logpoint：在 DAP UI 設定不暫停但列印訊息的中斷點，避免污染程式碼', diff: 'medium' },
+              { id: 'p5d40t6', text: '理解 Hot Code Replace：修改程式碼後在 debug session 中直接套用新版本', diff: 'hard' },
+            ]
+          },
+        ]
+      },
+      {
+        label: '第十一週 — neotest JUnit',
+        days: [
+          {
+            day: 41, title: 'neotest JUnit 基本操作', tools: ['neotest'],
+            tasks: [
+              { id: 'p5d41t1', text: '確認 neotest 和 java-test 已安裝（:Mason 確認）', diff: 'easy' },
+              { id: 'p5d41t2', text: '開啟測試檔案，練習 <leader>tr 執行游標最近的測試', diff: 'easy' },
+              { id: 'p5d41t3', text: '練習 <leader>tt 執行當前檔案所有測試', diff: 'easy' },
+              { id: 'p5d41t4', text: '練習 <leader>tS 開啟 Test Summary 面板', diff: 'easy' },
+              { id: 'p5d41t5', text: '製造一個失敗的測試，觀察 neotest 的視覺回饋', diff: 'medium' },
+            ],
+            code: `# neotest 快捷鍵
+<leader>tt   # 執行當前檔案所有測試
+<leader>tr   # 執行游標最近的測試
+<leader>tS   # 顯示 Test Summary 面板
+<leader>to   # 顯示測試輸出
+
+# 查看測試結果
+# 通過：綠色
+# 失敗：紅色 + 錯誤訊息`
+          },
+          {
+            day: 42, title: 'TDD 工作流整合', tools: ['neotest','nvim-dap'],
+            tasks: [
+              { id: 'p5d42t1', text: '先寫測試（Red），在 Neovim 看到失敗', diff: 'medium' },
+              { id: 'p5d42t2', text: '實作 code（Green），讓測試通過', diff: 'medium' },
+              { id: 'p5d42t3', text: '測試失敗時直接用 <leader>db 設中斷點 Debug', diff: 'hard' },
+              { id: 'p5d42t4', text: '整個流程不離開 Neovim', diff: 'hard' },
+              { id: 'p5d42t5', text: '學習 @ExtendWith(MockitoExtension.class) + @Mock + @InjectMocks 設定 Mockito', diff: 'medium' },
+              { id: 'p5d42t6', text: '練習 when(...).thenReturn(...) 模擬依賴行為，verify(...) 確認呼叫', diff: 'medium' },
+              { id: 'p5d42t7', text: '練習 @ParameterizedTest + @ValueSource / @CsvSource 一次測試多組輸入', diff: 'hard' },
+              { id: 'p5d42t8', text: '整合練習：替一個 Service 類別寫完整單元測試（正常路徑 + 異常路徑 + 邊界值）', diff: 'hard' },
+            ],
+            code: `// Mockito 基本範例
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+  @Mock UserRepository userRepo;
+  @InjectMocks UserService userService;
+
+  @Test
+  void findById_shouldReturnUser() {
+    when(userRepo.findById(1L)).thenReturn(Optional.of(new User(1L, "Jason")));
+    User result = userService.findById(1L);
+    assertThat(result.getName()).isEqualTo("Jason");
+    verify(userRepo, times(1)).findById(1L);
+  }
+
+  @Test
+  void findById_notFound_shouldThrow() {
+    when(userRepo.findById(99L)).thenReturn(Optional.empty());
+    assertThrows(NotFoundException.class, () -> userService.findById(99L));
+  }
+}
+
+// ParameterizedTest 範例
+@ParameterizedTest
+@ValueSource(strings = {"", " ", "  "})
+void createUser_blankName_shouldFail(String name) {
+  assertThrows(IllegalArgumentException.class, () -> userService.create(name));
+}
+
+// neotest 執行測試
+<leader>tr   # 執行游標最近的測試方法
+<leader>tt   # 執行整個測試類別
+<leader>tS   # 開啟 Test Summary 面板看結果`
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'p6', label: 'Phase 6', title: '進階工具與持續精進', duration: '持續',
+    color: 'var(--p6)',
+    weeks: [
+      {
+        label: '第十二週+ — 資料庫工具',
+        days: [
+          {
+            day: 43, title: 'pgcli PostgreSQL CLI', tools: ['pgcli'],
+            tasks: [
+              { id: 'p6d43t1', text: '安裝 pgcli：brew install pgcli', diff: 'easy' },
+              { id: 'p6d43t2', text: '連線到本地 PostgreSQL 資料庫', diff: 'easy' },
+              { id: 'p6d43t3', text: '練習 \\d tablename 查看 schema，\\dt 列出所有 tables', diff: 'easy' },
+              { id: 'p6d43t4', text: '練習 F3 開啟 multiline 模式貼上 SQL block', diff: 'easy' },
+              { id: 'p6d43t5', text: '練習 \\copy (SELECT ...) TO \'output.csv\' CSV HEADER 匯出查詢結果', diff: 'medium' },
+              { id: 'p6d43t6', text: '練習 \\timing 顯示每個查詢的執行時間，協助發現慢查詢', diff: 'easy' },
+              { id: 'p6d43t7', text: '設定 pgcli 的 ~/.config/pgcli/config：auto_vertical_output = True 讓寬表格自動垂直顯示', diff: 'easy' },
+            ],
+            code: `# 連線
+pgcli -h localhost -U myuser -d mydb
+pgcli postgresql://myuser:password@localhost/mydb
+
+# pgcli 常用操作
+\\dt              # 列出所有 tables
+\\d tablename     # 查看 table schema
+\\i query.sql     # 執行 SQL 檔案
+F3               # 切換 multiline 模式`
+          },
+          {
+            day: 44, title: 'sqlcl Oracle CLI', tools: ['sqlcl'],
+            tasks: [
+              { id: 'p6d44t1', text: '安裝 sqlcl：brew install sqlcl', diff: 'easy' },
+              { id: 'p6d44t2', text: '連線到 Oracle 資料庫（本地或 UAT）', diff: 'medium' },
+              { id: 'p6d44t3', text: '設定 SET SQLFORMAT ansiconsole 美化輸出', diff: 'easy' },
+              { id: 'p6d44t4', text: '練習 DESCRIBE tablename 查看 schema', diff: 'easy' },
+              { id: 'p6d44t5', text: '學習 SPOOL ~/output.csv 將查詢結果輸出到檔案，SPOOL OFF 停止', diff: 'easy' },
+              { id: 'p6d44t6', text: '練習 SET PAGESIZE 0 LINESIZE 200 調整輸出格式，讓長查詢結果不分頁', diff: 'easy' },
+              { id: 'p6d44t7', text: '練習在 tmux 的 DB pane 執行 SQL，同時在 Neovim pane 查看對應的 JPA Entity', diff: 'medium' },
+            ],
+            code: `# 連線
+sql myuser/password@//localhost:1521/ORCLPDB1
+sql myuser/password@TNS_ALIAS
+
+# sqlcl 常用指令
+SET SQLFORMAT ansiconsole  # 美化輸出格式
+DESCRIBE tablename          # 查看 schema
+@query.sql                  # 執行 SQL 檔案
+HISTORY                     # 查歷史指令`
+          },
+          {
+            day: 45, title: 'lazydocker Docker TUI', tools: ['lazydocker'],
+            tasks: [
+              { id: 'p6d45t1', text: '安裝 lazydocker：brew install lazydocker，設定 alias ld="lazydocker"', diff: 'easy' },
+              { id: 'p6d45t2', text: '練習查看容器狀態、logs、stats', diff: 'easy' },
+              { id: 'p6d45t3', text: '練習 restart container', diff: 'easy' },
+              { id: 'p6d45t4', text: '整合到 tmux 工作區（加一個 docker pane）', diff: 'medium' },
+              { id: 'p6d45t5', text: '練習在 lazydocker 的 Containers 面板按 e 進入容器 shell', diff: 'easy' },
+              { id: 'p6d45t6', text: '練習查看 Volumes 和 Networks 面板，理解容器間的連接關係', diff: 'medium' },
+              { id: 'p6d45t7', text: '練習清理無用映像檔：Images 面板選取後按 d（docker image prune）', diff: 'easy' },
+              { id: 'p6d45t8', text: '整合 docker-compose：用 lazydocker 監控 compose 定義的全部服務（DB + Redis + App）', diff: 'medium' },
+            ]
+          },
+          {
+            day: 46, title: 'LazyVim 個人化調整', tools: ['lazyvim'],
+            tasks: [
+              { id: 'p6d46t1', text: '閱讀 ~/.config/nvim/lua/config/ 目錄下的設定檔', diff: 'medium' },
+              { id: 'p6d46t2', text: '新增自訂 keymap（修改 keymaps.lua）', diff: 'hard' },
+              { id: 'p6d46t3', text: '調整 autocmds.lua 加入 Java 特定的自動化', diff: 'hard' },
+              { id: 'p6d46t4', text: '學習 lazy.nvim 的 plugin 設定語法，嘗試新增一個 plugin', diff: 'hard' },
+              { id: 'p6d46t5', text: '建立 Java 常用 LuaSnip 程式碼片段（如 psvm、sout、@Test 模板）', diff: 'hard' },
+              { id: 'p6d46t6', text: '在 which-key 設定自訂群組（如 <leader>j 作為 Java 專屬操作的前綴）', diff: 'hard' },
+              { id: 'p6d46t7', text: '探索 LazyVim 官方 extras：嘗試啟用 lang.xml、formatting.prettier 等', diff: 'medium' },
+            ]
+          },
+          {
+            day: 47, title: 'Log 分析工具', tools: ['lnav','tail'],
+            tasks: [
+              { id: 'p6d47t1', text: '安裝 lnav（log navigator）：brew install lnav', diff: 'easy' },
+              { id: 'p6d47t2', text: '用 lnav 開啟 Spring Boot log 檔案，練習按 e 跳到 ERROR、w 跳到 WARN', diff: 'easy' },
+              { id: 'p6d47t3', text: '練習 lnav 的 SQL 查詢模式（; SELECT count(*) FROM syslog WHERE log_level = "error"）', diff: 'hard' },
+              { id: 'p6d47t4', text: '練習 tail -f app.log | grep --line-buffered "Exception" 即時過濾 log', diff: 'easy' },
+              { id: 'p6d47t5', text: '練習用 rg + less 分析歷史 log（rg "ERROR" logs/ | less）', diff: 'easy' },
+              { id: 'p6d47t6', text: '在 tmux 工作區加入專用的 log pane，開發時常駐 tail -f', diff: 'medium' },
+            ],
+            code: `# lnav 操作
+lnav app.log              # 開啟 log 檔
+lnav /var/log/**/*.log    # 開啟多個 log 檔
+
+# lnav 快捷鍵
+e / E    # 跳到下一個 / 上一個 ERROR
+w / W    # 跳到下一個 / 上一個 WARN
+/pattern # 搜尋
+;        # 進入 SQL 查詢模式
+q        # 離開
+
+# 即時 log 監控
+tail -f app.log | grep --line-buffered "Exception\\|ERROR"
+tail -f app.log | grep --line-buffered -v "DEBUG\\|INFO"
+
+# log 統計
+grep "ERROR" app.log | wc -l               # 計算 ERROR 數量
+grep -oE "\\d{4}-\\d{2}-\\d{2}" app.log | sort | uniq -c  # 按日期統計`
+          },
+          {
+            day: 48, title: 'JVM 效能監控工具', tools: ['jcmd','jstack','jmap'],
+            tasks: [
+              { id: 'p6d48t1', text: '用 jps 找到執行中的 Java 行程 PID', diff: 'easy' },
+              { id: 'p6d48t2', text: '用 jcmd <PID> help 查看可用的診斷指令', diff: 'easy' },
+              { id: 'p6d48t3', text: '練習 jcmd <PID> Thread.print 輸出 thread dump，找 BLOCKED 的 thread', diff: 'medium' },
+              { id: 'p6d48t4', text: '練習 jcmd <PID> GC.heap_info 查看 Heap 使用狀況', diff: 'medium' },
+              { id: 'p6d48t5', text: '練習 jstack <PID> > dump.txt 儲存 thread dump，用 bat + grep 分析', diff: 'medium' },
+              { id: 'p6d48t6', text: '安裝 async-profiler（brew install async-profiler），對執行中的服務做 CPU 採樣', diff: 'hard' },
+              { id: 'p6d48t7', text: '理解如何從 thread dump 判斷是否有 deadlock（找互相等待的 BLOCKED threads）', diff: 'hard' },
+            ],
+            code: `# JVM 診斷指令
+jps -l                          # 列出 Java 行程 PID + 主類別名稱
+jcmd <PID> help                 # 列出可用指令
+jcmd <PID> Thread.print         # 輸出 thread dump
+jcmd <PID> GC.heap_info         # Heap 使用狀況
+jcmd <PID> VM.flags             # 查看 JVM 啟動參數
+jcmd <PID> VM.system_properties # 查看系統屬性
+
+# 儲存並分析 thread dump
+jstack <PID> > /tmp/dump.txt
+grep -A 5 "BLOCKED" /tmp/dump.txt   # 找阻塞的 thread
+grep "deadlock" /tmp/dump.txt       # 找 deadlock
+
+# async-profiler（CPU profiling）
+asprof -d 30 -f /tmp/cpu.html <PID>  # 對 PID 採樣 30 秒`
+          },
+          {
+            day: 49, title: 'Spring Boot 進階終端工作流', tools: ['actuator','httpie','jq'],
+            tasks: [
+              { id: 'p6d49t1', text: '確認 spring-boot-starter-actuator 已在 pom.xml，設定 management.endpoints.web.exposure.include=*', diff: 'easy' },
+              { id: 'p6d49t2', text: '用 http GET localhost:8080/actuator/health 確認服務狀態', diff: 'easy' },
+              { id: 'p6d49t3', text: '用 http GET localhost:8080/actuator/metrics | jq \'.names[]\' 查看所有指標', diff: 'medium' },
+              { id: 'p6d49t4', text: '用 http GET localhost:8080/actuator/env | jq \'.propertySources[0].properties\' 查看環境設定', diff: 'medium' },
+              { id: 'p6d49t5', text: '用 http GET localhost:8080/actuator/mappings | jq \'.contexts[].mappings.dispatcherServlets\' 查看所有 API 路徑', diff: 'medium' },
+              { id: 'p6d49t6', text: '開啟 Spring Boot DevTools（spring-boot-devtools），練習 classpath 異動後自動重啟', diff: 'medium' },
+              { id: 'p6d49t7', text: '建立 Makefile 整合常用指令（make run, make test, make build, make clean）', diff: 'hard' },
+            ],
+            code: `# Spring Boot Actuator 常用端點
+http GET localhost:8080/actuator/health     # 健康檢查
+http GET localhost:8080/actuator/info       # 應用資訊
+http GET localhost:8080/actuator/metrics    # 指標清單
+http GET localhost:8080/actuator/env        # 環境設定
+http GET localhost:8080/actuator/loggers    # Logger 設定
+http GET localhost:8080/actuator/mappings   # 所有路由
+
+# 動態調整 log level（不重啟）
+http POST localhost:8080/actuator/loggers/com.example \
+  configuredLevel=DEBUG Content-Type:application/json
+
+# 查詢特定指標
+http GET localhost:8080/actuator/metrics/jvm.memory.used | jq '.measurements'
+
+# Makefile 範例
+# make run      → mvn spring-boot:run
+# make test     → mvn clean test
+# make build    → mvn clean package -DskipTests
+# make logs     → tail -f app.log`
+          },
+          {
+            day: 50, title: '程式碼品質工具', tools: ['checkstyle','pmd','spotbugs'],
+            tasks: [
+              { id: 'p6d50t1', text: '在 pom.xml 加入 maven-checkstyle-plugin，執行 mvn checkstyle:check', diff: 'medium' },
+              { id: 'p6d50t2', text: '理解 Checkstyle 的規則檔（google_checks.xml 或 sun_checks.xml）', diff: 'medium' },
+              { id: 'p6d50t3', text: '在 pom.xml 加入 spotbugs-maven-plugin，執行 mvn spotbugs:check 找潛在 bug', diff: 'medium' },
+              { id: 'p6d50t4', text: '練習 mvn verify 一次執行：編譯 + 測試 + 靜態分析', diff: 'easy' },
+              { id: 'p6d50t5', text: '在 Neovim 用 <leader>xx 開啟 trouble.nvim 查看 LSP 靜態分析警告', diff: 'easy' },
+              { id: 'p6d50t6', text: '設定 git pre-commit hook（.git/hooks/pre-commit）在 commit 前自動執行 mvn checkstyle:check', diff: 'hard' },
+            ],
+            code: `# pom.xml 加入品質工具
+# Maven Checkstyle
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-checkstyle-plugin</artifactId>
+  <version>3.3.1</version>
+</plugin>
+
+# 執行
+mvn checkstyle:check          # 靜態代碼風格檢查
+mvn spotbugs:check            # 靜態 bug 分析
+mvn pmd:check                 # PMD 品質規則
+mvn verify                    # 一次執行全部
+
+# pre-commit hook
+#!/bin/bash
+mvn checkstyle:check -q || exit 1
+echo "Checkstyle passed!"
+
+# trouble.nvim：查看所有 LSP 診斷
+<leader>xx   # Toggle 診斷面板
+<leader>xX   # 只看當前檔案的診斷
+<leader>xL   # 查看 loclist`
+          },
+          {
+            day: 51, title: 'Git 進階工作流', tools: ['lazygit','git'],
+            tasks: [
+              { id: 'p6d51t1', text: '在 lazygit 練習 Interactive Rebase：r 開啟 rebase 選單，squash 合併 commits', diff: 'hard' },
+              { id: 'p6d51t2', text: '練習 git stash（lazygit 按 s）暫存工作中的修改，切換 branch 後恢復', diff: 'medium' },
+              { id: 'p6d51t3', text: '練習 cherry-pick：在 lazygit log 找到 commit，按 c 複製到當前 branch', diff: 'hard' },
+              { id: 'p6d51t4', text: '學習在 lazygit 解決 merge conflict：按 e 開啟 Neovim 的 3-way diff', diff: 'hard' },
+              { id: 'p6d51t5', text: '練習 git bisect（lazygit 暫不支援，用 CLI）找出引入 bug 的 commit', diff: 'hard' },
+              { id: 'p6d51t6', text: '設定 git blame 在 Neovim：用 <leader>gb 查看當前行的 git blame', diff: 'easy' },
+            ],
+            code: `# lazygit 進階操作
+r    # 開啟 rebase 選單
+s    # stash 當前修改
+c    # cherry-pick 選取的 commit
+e    # 解決 conflict（在 Neovim 3-way diff）
+?    # 查看所有快捷鍵
+
+# Git Bisect（找 bug 引入點）
+git bisect start
+git bisect bad                  # 當前是壞的
+git bisect good v1.2.0          # 已知這個版本是好的
+# Git 自動 checkout 中間的 commit
+# 測試後：
+git bisect good / git bisect bad  # 告訴 Git 結果
+git bisect reset                  # 找到後重置
+
+# Neovim Git blame
+<leader>gb    # 查看當前行的 git blame（gitsigns.nvim）
+<leader>gB    # 開啟完整 blame 視圖`
+          },
+        ]
+      }
+    ]
+  }
+];
+
+const EXTRA_ITEMS = [
+  {
+    group: 'Git 基礎鞏固（lazygit 假設你已懂 Git）',
+    items: [
+      { id: 'ex1', text: '理解 Git branch 策略：feature branch、main/develop 分支模型' },
+      { id: 'ex2', text: '理解 rebase vs merge 的差異，知道什麼時候用哪個' },
+      { id: 'ex3', text: '學習 git stash、git cherry-pick 的使用場景' },
+      { id: 'ex4', text: '學習如何解決 merge conflict（在終端，不依賴 GUI）' },
+    ]
+  },
+  {
+    group: 'JVM 基礎知識（Debug 時很有幫助）',
+    items: [
+      { id: 'ex5', text: '理解 Heap vs Stack 記憶體，知道 OutOfMemoryError 的成因' },
+      { id: 'ex6', text: '了解 GC 基本概念（何時觸發、有哪些 GC 演算法）' },
+      { id: 'ex7', text: '學習 jstack、jmap、jcmd 基本診斷工具（JDK 內建）' },
+      { id: 'ex8', text: '理解 Thread dump 怎麼讀（排查 deadlock、thread pool 問題）' },
+    ]
+  },
+  {
+    group: 'Spring Boot 專案結構',
+    items: [
+      { id: 'ex9', text: '理解 Maven 標準目錄結構（src/main/java, src/test/java, resources）' },
+      { id: 'ex10', text: '理解 Spring Boot 自動配置（Auto-configuration）原理' },
+      { id: 'ex11', text: '學習 application.yml vs application.properties 的用法' },
+      { id: 'ex12', text: '理解 Spring Profiles（dev/staging/prod 環境切換）' },
+    ]
+  },
+  {
+    group: 'Docker 基礎（lazydocker 假設你懂 Docker）',
+    items: [
+      { id: 'ex13', text: '理解 image vs container 的差異' },
+      { id: 'ex14', text: '學習 docker-compose.yml 基本結構（服務、網路、volumes）' },
+      { id: 'ex15', text: '練習用 docker-compose up 啟動開發環境（DB + Redis + App）' },
+      { id: 'ex16', text: '學習 docker logs -f 和 docker exec 進入 container' },
+    ]
+  },
+  {
+    group: 'SSH 與遠端工作',
+    items: [
+      { id: 'ex17', text: '設定 SSH Key（ed25519），加到 ~/.ssh/config 管理多個 server' },
+      { id: 'ex18', text: '學習 ssh-agent 和 ssh-add，避免每次輸入 passphrase' },
+      { id: 'ex19', text: '學習 tmux on remote server：SSH 連線中斷後 session 依然存在' },
+      { id: 'ex20', text: '練習 scp / rsync 從遠端傳輸檔案' },
+    ]
+  },
+  {
+    group: 'Vim 進階操作（Phase 2 後持續練習）',
+    items: [
+      { id: 'ex21', text: '學習 Vim surround 操作（LazyVim 內建 mini.surround）' },
+      { id: 'ex22', text: '學習 marks：ma 設 mark a，\'a 跳到 mark a' },
+      { id: 'ex23', text: '學習 fold：zc 折疊，zo 展開，zM 全部折疊' },
+      { id: 'ex24', text: '學習 :copen 和 quickfix list 導航（LSP 搜尋結果）' },
+    ]
+  },
+  {
+    group: 'JUnit 5 + Mockito 重要測試知識',
+    items: [
+      { id: 'ex25', text: '理解 @BeforeEach @AfterEach @BeforeAll @AfterAll 的生命週期和用途' },
+      { id: 'ex26', text: '學習 AssertJ：assertThat(result).isEqualTo("expected") 比 JUnit 斷言更易讀' },
+      { id: 'ex27', text: '理解 Mockito spy vs mock 的差異（spy 保留原始行為）' },
+      { id: 'ex28', text: '學習 @Captor + ArgumentCaptor 捕獲並驗證傳入 mock 的參數' },
+      { id: 'ex29', text: '學習 @TestMethodOrder + @Order 控制測試執行順序（整合測試用）' },
+      { id: 'ex30', text: '理解 @SpringBootTest vs @WebMvcTest vs @DataJpaTest 的差異和適用場景' },
+    ]
+  },
+  {
+    group: 'Spring Boot 進階概念（終端工作流前提）',
+    items: [
+      { id: 'ex31', text: '理解 Spring AOP：@Aspect @Around 攔截器，常見在 logging、transaction 場景' },
+      { id: 'ex32', text: '理解 @Transactional 的傳播行為（REQUIRED/REQUIRES_NEW）和陷阱（self-invocation）' },
+      { id: 'ex33', text: '學習 Spring Event：ApplicationEventPublisher 和 @EventListener 解耦模組' },
+      { id: 'ex34', text: '理解 Spring Security 的 Filter Chain，知道如何在終端測試受保護的端點（JWT token）' },
+      { id: 'ex35', text: '學習 application-{profile}.yml：dev/staging/prod 環境設定分離，搭配 jenv 切換 Java 版本' },
+    ]
+  },
+  {
+    group: '網路偵錯工具（Java 服務除錯必備）',
+    items: [
+      { id: 'ex36', text: '學習 curl -v 顯示完整 HTTP 請求/回應 header，排查認證和 Content-Type 問題' },
+      { id: 'ex37', text: '學習 lsof -i :8080 查看 port 被哪個行程占用（Start failed: port already in use）' },
+      { id: 'ex38', text: '學習 netstat -an | grep LISTEN 查看所有監聽 port' },
+      { id: 'ex39', text: '學習 tcpdump 基本用法：捕獲本機 HTTP 封包排查問題（sudo tcpdump -i lo0 port 8080）' },
+      { id: 'ex40', text: '理解 /etc/hosts 修改本地 DNS，在開發環境模擬不同 domain' },
+    ]
+  },
+  {
+    group: 'Shell 腳本進階（讓工作流自動化）',
+    items: [
+      { id: 'ex41', text: '學習 bash 條件判斷：if [ -f file ]、if [ $? -ne 0 ] 錯誤處理' },
+      { id: 'ex42', text: '學習 bash 迴圈：for f in *.java; do ...; done 批次處理檔案' },
+      { id: 'ex43', text: '學習 bash 函數定義和參數（$1, $2, $@, $#）' },
+      { id: 'ex44', text: '學習 set -e（錯誤即停止）和 set -x（除錯模式列印每行指令）' },
+      { id: 'ex45', text: '學習 here-doc（<<EOF）在 script 中嵌入多行文字或 SQL' },
+    ]
+  },
+];
+
+// ─── State ─────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'java-learning-tracker-v2';
+let state = {};
+
+function loadState() {
+  try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { state = {}; }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function isChecked(id) { return !!state[id]; }
+
+function toggleTask(id) {
+  state[id] = !state[id];
+  saveState();
+  updateUI();
+}
+
+// ─── Render ────────────────────────────────────────────────────────────────
+
+function allTaskIds() {
+  const ids = [];
+  PHASES.forEach(p => p.weeks.forEach(w => w.days.forEach(d => d.tasks.forEach(t => ids.push(t.id)))));
+  EXTRA_ITEMS.forEach(g => g.items.forEach(t => ids.push(t.id)));
+  return ids;
+}
+
+function phaseTaskIds(phase) {
+  const ids = [];
+  phase.weeks.forEach(w => w.days.forEach(d => d.tasks.forEach(t => ids.push(t.id))));
+  return ids;
+}
+
+function countDone(ids) { return ids.filter(id => isChecked(id)).length; }
+
+function updateUI() {
+  const allIds = allTaskIds();
+  const total = allIds.length;
+  const done = countDone(allIds);
+  const pct = total ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('overall-bar').style.width = pct + '%';
+  document.getElementById('overall-pct').textContent = pct + '%';
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-total').textContent = total;
+
+  const days = Object.values(state).filter(Boolean).length > 0
+    ? [...new Set(Object.keys(state).filter(k => state[k]).map(k => k.split('t')[0]))].length
+    : 0;
+  document.getElementById('stat-days').textContent = days;
+
+  PHASES.forEach(phase => {
+    const ids = phaseTaskIds(phase);
+    const pdone = countDone(ids);
+    const ppct = ids.length ? Math.round(pdone / ids.length * 100) : 0;
+
+    const bar = document.querySelector(`#phase-${phase.id}-bar`);
+    const text = document.querySelector(`#phase-${phase.id}-text`);
+    const miniBar = document.querySelector(`#nav-${phase.id}-bar`);
+    if (bar) { bar.style.width = ppct + '%'; bar.style.background = phase.color; }
+    if (text) text.textContent = `${pdone}/${ids.length}`;
+    if (miniBar) { miniBar.style.width = ppct + '%'; miniBar.style.background = phase.color; }
+
+    phase.weeks.forEach(week => {
+      week.days.forEach(day => {
+        const dayIds = day.tasks.map(t => t.id);
+        const allDone = dayIds.length > 0 && dayIds.every(id => isChecked(id));
+        const done = countDone(dayIds);
+        const card = document.getElementById(`card-${day.tasks[0]?.id?.split('t')[0]}-${day.day}`);
+        if (card) {
+          card.classList.toggle('all-done', allDone);
+          const summary = card.querySelector('.day-check-summary');
+          if (summary) summary.textContent = `${done}/${dayIds.length}`;
+        }
+        day.tasks.forEach(task => {
+          const label = document.getElementById(`label-${task.id}`);
+          if (label) label.classList.toggle('done', isChecked(task.id));
+        });
+      });
+    });
+  });
+
+  // Extra
+  EXTRA_ITEMS.forEach(g => {
+    g.items.forEach(task => {
+      const label = document.getElementById(`label-${task.id}`);
+      if (label) label.classList.toggle('done', isChecked(task.id));
+    });
+  });
+}
+
+function renderPhaseNav() {
+  const nav = document.getElementById('phase-nav');
+  nav.innerHTML = PHASES.map(p => `
+    <li>
+      <a href="#${p.id}" class="phase-link" data-phase="${p.id}">
+        <span class="phase-dot" style="background:${p.color}"></span>
+        ${p.label}: ${p.title}
+      </a>
+      <div class="phase-mini-progress">
+        <div class="phase-mini-fill" id="nav-${p.id}-bar" style="width:0%"></div>
+      </div>
+    </li>
+  `).join('');
+}
+
+function renderMain() {
+  const main = document.getElementById('main-content');
+  let html = '';
+
+  PHASES.forEach(phase => {
+    const ids = phaseTaskIds(phase);
+    html += `
+<section class="phase-block" id="${phase.id}">
+  <div class="phase-header">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span class="phase-badge" style="--color:${phase.color}">${phase.label}</span>
+        <h2 class="phase-title">${phase.title}</h2>
+      </div>
+      <div class="phase-subtitle">${phase.duration}・${ids.length} 項學習任務</div>
+    </div>
+    <div class="phase-progress-wrap">
+      <div class="phase-progress-text" id="phase-${phase.id}-text">0/${ids.length}</div>
+      <div class="phase-progress-bar">
+        <div class="phase-progress-fill" id="phase-${phase.id}-bar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+`;
+
+    phase.weeks.forEach(week => {
+      html += `<div class="week-group"><div class="week-label">${week.label}</div>`;
+      week.days.forEach(day => {
+        const cardKey = `${day.tasks[0]?.id?.split('t')[0]}-${day.day}`;
+        const tools = day.tools ? day.tools.map(t => `<span class="tool-tag">${t}</span>`).join('') : '';
+        html += `
+<div class="day-card" id="card-${cardKey}">
+  <div class="day-header" onclick="toggleCard(this)">
+    <div class="day-num">D${day.day}</div>
+    <div style="flex:1">
+      <div class="day-title">${day.title}</div>
+      <div class="day-tools">${tools}</div>
+    </div>
+    <div class="day-check-summary">0/${day.tasks.length}</div>
+    <div class="day-toggle">▼</div>
+  </div>
+  <div class="day-body">
+    <ul class="task-list">
+      ${day.tasks.map(task => `
+        <li class="task-item">
+          <div class="task-cb">
+            <input type="checkbox" id="cb-${task.id}" ${isChecked(task.id) ? 'checked' : ''}
+              onchange="toggleTask('${task.id}')">
+          </div>
+          <label class="task-text ${isChecked(task.id) ? 'done' : ''}" id="label-${task.id}" for="cb-${task.id}">
+            ${task.text}
+            ${task.diff ? `<span class="task-diff diff-${task.diff}">${task.diff === 'easy' ? '簡單' : task.diff === 'medium' ? '中等' : '難'}</span>` : ''}
+            ${task.note ? `<div class="task-note">${task.note}</div>` : ''}
+          </label>
+        </li>
+      `).join('')}
+    </ul>
+    ${day.code ? `
+      <div class="cheatsheet">
+        <div class="cheatsheet-header" onclick="toggleCheat(this)">
+          <span>練習指令參考</span><span>▶</span>
+        </div>
+        <div class="cheatsheet-body">
+          <pre class="code-block">${day.code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+        </div>
+      </div>` : ''}
+  </div>
+</div>`;
+      });
+      html += `</div>`;
+    });
+
+    html += `</section>`;
+  });
+
+  // Extra block
+  html += `
+<div class="extra-block" id="extra-section">
+  <div class="extra-header">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="var(--extra)"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13zm.75-9.75a.75.75 0 10-1.5 0v4.5a.75.75 0 001.5 0v-4.5zm-.75 7a.875.875 0 100-1.75.875.875 0 000 1.75z"/></svg>
+    <h2>額外必學項目</h2>
+  </div>
+  <div class="extra-desc">
+    以下是 roadmap 文件中沒有明確提及，但在實際工作中是前提知識的項目。
+    這些不需要按順序學，缺什麼補什麼。
+  </div>
+  ${EXTRA_ITEMS.map(group => `
+    <div class="extra-group">
+      <div class="extra-group-title">${group.group}</div>
+      <ul class="task-list">
+        ${group.items.map(task => `
+          <li class="task-item">
+            <div class="task-cb">
+              <input type="checkbox" id="cb-${task.id}" ${isChecked(task.id) ? 'checked' : ''}
+                onchange="toggleTask('${task.id}')">
+            </div>
+            <label class="task-text ${isChecked(task.id) ? 'done' : ''}" id="label-${task.id}" for="cb-${task.id}">
+              ${task.text}
+            </label>
+          </li>
+        `).join('')}
+      </ul>
+    </div>
+  `).join('')}
+</div>
+`;
+
+  main.innerHTML = html;
+}
+
+// ─── Interactions ───────────────────────────────────────────────────────────
+
+function toggleCard(header) {
+  const card = header.closest('.day-card');
+  card.classList.toggle('open');
+}
+
+function toggleCheat(header) {
+  const cheat = header.closest('.cheatsheet');
+  cheat.classList.toggle('open');
+  header.querySelector('span:last-child').textContent = cheat.classList.contains('open') ? '▼' : '▶';
+}
+
+function scrollToExtra() {
+  document.getElementById('extra-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetAll() {
+  if (confirm('確定要清除所有學習進度嗎？')) {
+    state = {};
+    saveState();
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    updateUI();
+  }
+}
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+
+loadState();
+renderPhaseNav();
+renderMain();
+updateUI();
+</script>
+<!-- SUPPLEMENT:START -->
+<script>
+// Auto-generated supplement notes — do not edit manually
+// Last updated: 2026-05-19 00:41 | 9 notes
+const SUPPLEMENT_NOTES = {
+  "p1d1t1": "若重啟後 prompt 仍是舊樣式，需確認 ~/.zshrc 已存檔並執行 source ~/.zshrc；starship 會讀取 XDG_CONFIG_HOME/starship.toml 進行客製化，預設路徑為 ~/.config/starship.toml。",
+  "p1d1t2": "alias 只在當前 shell 生效，需寫入 ~/.zshrc 才能持久化；可用 which ll 確認 alias 是否覆蓋系統指令，若與既有 ll 衝突可改用 alias ls='eza -la --git'。",
+  "p1d1t3": "bat 會自動偵測檔案類型並套用對應語法主題；若要關閉分頁器直接輸出，可加 --paging=never，適合在腳本中使用或搭配管線傳遞給其他指令。",
+  "p1d1t4": "驗證時重點觀察 prompt 右側是否出現分支名稱（如 main 或 develop）；若在非 Git 目錄看不到分支屬正常行為，starship 僅在 Git repo 內才顯示該模組。",
+  "p1d1t5": "eza 的 --git 旗標會在每個檔案旁顯示 Git 狀態符號（M 已修改、N 新增等），搭配 --tree 可直觀看出哪些子目錄有未提交的變更，是 code review 前的快速檢查利器。",
+  "p1d1t6": "bat 預設使用 Monokai Extended 主題；若在 CI 或 SSH 環境下顏色顯示異常，可加 --color=always 強制輸出色碼，或用 bat --list-themes 切換至對比度更高的主題。",
+  "p1d2t1": "安裝後若 Ctrl+R 無效，需重新開啟終端機或執行 source ~/.zshrc。install 腳本會自動將 key binding 寫入 shell 設定檔，省去手動配置。",
+  "p1d2t2": "fzf 的歷史搜尋採用模糊比對演算法（Smith-Waterman 變體），輸入字元不需連續，例如輸入 mci 可命中 mvn clean install，大幅減少輸入量。",
+  "p1d2t3": "Ctrl+T 底層呼叫 find 指令遍歷目錄，若專案過大可設定環境變數 FZF_DEFAULT_COMMAND 改用 fd 或 rg，速度可提升數倍且自動忽略 .gitignore 內容。"
+};
+(function () {
+  Object.entries(SUPPLEMENT_NOTES).forEach(function ([id, note]) {
+    var label = document.getElementById("label-" + id);
+    if (label && !label.querySelector(".supplement-note")) {
+      var el = document.createElement("div");
+      el.className = "task-note supplement-note";
+      el.textContent = "💡 " + note;
+      label.appendChild(el);
+    }
+  });
+})();
+</script>
+<!-- SUPPLEMENT:END -->
+</body>
+</html>
