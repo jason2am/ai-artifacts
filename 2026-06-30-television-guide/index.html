@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Television 設定學習文件</title>
+  <style>
+    /* Catppuccin Mocha */
+    :root {
+      --base:    #1e1e2e;
+      --mantle:  #181825;
+      --crust:   #11111b;
+      --surface0:#313244;
+      --surface1:#45475a;
+      --surface2:#585b70;
+      --overlay0:#6c7086;
+      --overlay1:#7f849c;
+      --text:    #cdd6f4;
+      --subtext1:#bac2de;
+      --subtext0:#a6adc8;
+      --lavender:#b4befe;
+      --blue:    #89b4fa;
+      --sapphire:#74c7ec;
+      --sky:     #89dceb;
+      --teal:    #94e2d5;
+      --green:   #a6e3a1;
+      --yellow:  #f9e2af;
+      --peach:   #fab387;
+      --maroon:  #eba0ac;
+      --red:     #f38ba8;
+      --mauve:   #cba6f7;
+      --pink:    #f5c2e7;
+      --flamingo:#f2cdcd;
+      --rosewater:#f5e0dc;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--base);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    nav {
+      width: 260px;
+      min-width: 260px;
+      background: var(--mantle);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--surface0);
+    }
+    nav .logo { padding: 0 20px 20px; border-bottom: 1px solid var(--surface0); margin-bottom: 12px; }
+    nav .logo h1 { font-size: 1.1rem; color: var(--mauve); }
+    nav .logo p  { font-size: 0.75rem; color: var(--overlay1); margin-top: 4px; }
+    nav a {
+      display: block; padding: 8px 20px; color: var(--subtext1);
+      text-decoration: none; font-size: 0.85rem;
+      border-left: 3px solid transparent; transition: all 0.15s;
+    }
+    nav a:hover { color: var(--text); background: var(--surface0); }
+    nav a.active { color: var(--mauve); border-left-color: var(--mauve); background: var(--surface0); }
+    nav .nav-section {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+      color: var(--overlay0); text-transform: uppercase; padding: 16px 20px 4px;
+    }
+
+    /* ── Main ── */
+    main { flex: 1; padding: 40px 48px; max-width: 1000px; }
+    .page-title { font-size: 2rem; font-weight: 700; color: var(--mauve); margin-bottom: 8px; }
+    .page-subtitle { color: var(--subtext0); font-size: 0.95rem; margin-bottom: 40px; }
+    section { margin-bottom: 56px; scroll-margin-top: 20px; }
+
+    h2 {
+      font-size: 1.4rem; color: var(--blue);
+      border-bottom: 1px solid var(--surface1); padding-bottom: 8px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    h2 .icon { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; color: var(--peach); margin: 24px 0 10px; }
+    p { color: var(--subtext1); line-height: 1.7; margin-bottom: 12px; font-size: 0.9rem; }
+
+    /* ── Code blocks ── */
+    pre {
+      background: var(--crust); border: 1px solid var(--surface1); border-radius: 8px;
+      padding: 16px; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; margin: 12px 0;
+    }
+    code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }
+    pre code { color: var(--text); }
+    p code, li code, td code {
+      background: var(--surface0); border-radius: 4px; padding: 1px 6px;
+      font-size: 0.82em; color: var(--sky);
+    }
+    .kw  { color: var(--mauve); }
+    .str { color: var(--green); }
+    .cmt { color: var(--overlay1); font-style: italic; }
+    .fn  { color: var(--blue); }
+    .var { color: var(--peach); }
+    .sym { color: var(--teal); }
+    .num { color: var(--peach); }
+
+    /* ── Boxes ── */
+    .effect-box, .tip-box, .warn-box {
+      border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 12px 0;
+      font-size: 0.85rem; color: var(--subtext1); background: var(--surface0);
+    }
+    .effect-box { border-left: 3px solid var(--teal); }
+    .effect-box strong { color: var(--teal); display: block; margin-bottom: 4px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .tip-box { border-left: 3px solid var(--yellow); }
+    .tip-box strong { color: var(--yellow); }
+    .warn-box { border-left: 3px solid var(--red); }
+    .warn-box strong { color: var(--red); }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin: 12px 0; }
+    th { background: var(--surface1); color: var(--lavender); font-weight: 600; text-align: left; padding: 8px 12px; }
+    td { padding: 7px 12px; border-bottom: 1px solid var(--surface0); color: var(--subtext1); vertical-align: top; }
+    tr:hover td { background: var(--surface0); }
+    td code { color: var(--sky); }
+
+    /* ── Keybinding grid ── */
+    .keybind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin: 12px 0; }
+    .keybind-item { background: var(--surface0); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; }
+    .key {
+      background: var(--surface2); border: 1px solid var(--overlay0); border-radius: 5px;
+      padding: 3px 8px; font-family: monospace; font-size: 0.78rem; color: var(--yellow);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .keybind-desc { font-size: 0.82rem; color: var(--subtext1); }
+
+    /* ── Badges ── */
+    .tool-badge {
+      display: inline-flex; align-items: center; gap: 6px; background: var(--surface1);
+      border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; color: var(--subtext0); margin: 4px 4px 4px 0;
+    }
+    .tool-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mauve); }
+
+    /* ── Hero card ── */
+    .tool-card { background: var(--mantle); border: 1px solid var(--surface1); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+    .tool-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .tool-card-icon {
+      font-size: 1.8rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+      background: var(--surface0); border-radius: 10px;
+    }
+    .tool-card-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .tool-card-sub   { font-size: 0.8rem; color: var(--overlay1); margin-top: 2px; }
+
+    /* ── Architecture diagram ── */
+    .arch { display: flex; flex-direction: column; gap: 14px; margin: 18px 0; }
+    .arch-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .arch-node {
+      flex: 1; min-width: 180px; background: var(--surface0); border: 1px solid var(--surface1);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .arch-node h4 { color: var(--sky); font-size: 0.9rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .arch-node p { font-size: 0.78rem; margin: 0; color: var(--subtext0); }
+    .arch-node.root { border-color: var(--mauve); }
+    .arch-node.root h4 { color: var(--mauve); }
+    .arrow-down { text-align: center; color: var(--overlay0); font-size: 1.2rem; }
+
+    /* ── Channel category cards ── */
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+    .cat-card { background: var(--mantle); border: 1px solid var(--surface1); border-radius: 10px; padding: 14px 16px; }
+    .cat-card h4 { color: var(--peach); font-size: 0.9rem; margin-bottom: 8px; }
+    .cat-card .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { background: var(--surface0); border-radius: 5px; padding: 2px 8px; font-size: 0.72rem; font-family: monospace; color: var(--sky); }
+
+    ul { padding-left: 20px; }
+    li { color: var(--subtext1); font-size: 0.88rem; line-height: 1.8; }
+    hr { border: none; border-top: 1px solid var(--surface0); margin: 32px 0; }
+
+    /* ── Progress tracker ── */
+    .progress-wrap {
+      background: var(--mantle); border: 1px solid var(--surface1); border-radius: 12px;
+      padding: 18px 22px; margin-bottom: 40px;
+    }
+    .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .progress-label { color: var(--text); font-weight: 600; font-size: 0.95rem; }
+    .progress-count { color: var(--lavender); font-size: 0.85rem; font-family: monospace; }
+    .progress-bar-bg { background: var(--surface0); border-radius: 5px; height: 9px; overflow: hidden; }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, var(--mauve), var(--sky));
+      height: 100%; width: 0%; border-radius: 5px; transition: width 0.35s ease;
+    }
+    .progress-note { color: var(--overlay1); font-size: 0.78rem; margin-top: 10px; }
+    .progress-reset {
+      background: var(--surface0); border: 1px solid var(--surface1); border-radius: 6px;
+      color: var(--subtext0); cursor: pointer; font-size: 0.72rem; padding: 3px 10px; margin-left: 10px;
+    }
+    .progress-reset:hover { background: var(--surface1); color: var(--text); }
+
+    /* ── Section checkbox ── */
+    h2 .sec-check {
+      margin-left: auto; display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.72rem; color: var(--overlay1); cursor: pointer; user-select: none;
+      font-weight: 500; border: 1px solid var(--surface1); border-radius: 20px; padding: 4px 12px;
+      transition: all 0.15s;
+    }
+    h2 .sec-check:hover { background: var(--surface0); color: var(--subtext0); }
+    h2 .sec-check .box {
+      width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--overlay0);
+      display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; line-height: 1;
+      transition: all 0.15s;
+    }
+    h2 .sec-check.done { color: var(--green); border-color: var(--green); background: rgba(166,227,161,0.1); }
+    h2 .sec-check.done .box { background: var(--green); border-color: var(--green); color: var(--base); }
+    section.done h2 { opacity: 0.72; }
+
+    @media (max-width: 768px) {
+      nav { display: none; }
+      main { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">
+      <h1>📺 Television</h1>
+      <p>Fuzzy finder 設定學習文件</p>
+    </div>
+    <div class="nav-section">基礎</div>
+    <a href="#intro">1. Television 是什麼</a>
+    <a href="#arch">2. 設定檔架構</a>
+    <a href="#config">3. config.toml 詳解</a>
+    <div class="nav-section">Channels</div>
+    <a href="#channel-anatomy">4. Channel 結構</a>
+    <a href="#templates">5. Template 語法</a>
+    <a href="#channel-list">6. 全部 Channel 清單</a>
+    <a href="#deep-dive">7. 重點 Channel 拆解</a>
+    <div class="nav-section">使用</div>
+    <a href="#shell">8. Shell 整合</a>
+    <a href="#keys">9. 快捷鍵速查</a>
+    <a href="#quickstart">10. 快速上手</a>
+  </nav>
+
+  <main>
+    <div class="page-title">📺 Television 設定學習文件</div>
+    <div class="page-subtitle">
+      你的 dotfiles 裡 <code>television/</code> 設定完整解析 —— 一份設定檔 + 61 個 channel。
+      讀完你會知道每個區塊在做什麼、template 語法怎麼讀，以及怎麼自己加 channel。
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-label">📚 學習進度</span>
+        <span>
+          <span class="progress-count" id="progress-count">0 / 10</span>
+          <button class="progress-reset" id="progress-reset">重設</button>
+        </span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+      <div class="progress-note" id="progress-note">讀完一個章節，點右上角的核取方塊標記為「已學會」。進度會自動存在瀏覽器裡。</div>
+    </div>
+
+    <!-- ───────────── 1. INTRO ───────────── -->
+    <section id="intro">
+      <h2><span class="icon">🎯</span> 1. Television 是什麼<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+
+      <div class="tool-card">
+        <div class="tool-card-header">
+          <div class="tool-card-icon">📺</div>
+          <div>
+            <div class="tool-card-title">television (指令 <code>tv</code>)</div>
+            <div class="tool-card-sub">用 Rust 寫的通用 fuzzy finder TUI</div>
+          </div>
+        </div>
+        <p>
+          可以把它想成「<strong>會分頻道的 fzf</strong>」。fzf 只是吃一段 stdin 然後讓你模糊搜尋；
+          television 多了 <strong>channel（頻道）</strong> 的概念 —— 每個 channel 是一份設定，
+          定義「資料從哪來（source）、怎麼預覽（preview）、按鍵做什麼動作（actions）」。
+        </p>
+        <p>
+          所以同一個工具，可以是檔案搜尋器、git 分支切換器、Docker 容器管理器、process 管理器……
+          切換 channel 就切換用途。
+        </p>
+      </div>
+
+      <h3>核心心智模型</h3>
+      <ul>
+        <li><strong>Source</strong> — 一個 shell 指令，產生候選清單（例如 <code>fd -t f</code> 列檔案）。</li>
+        <li><strong>Filter</strong> — 你打字，television 即時模糊比對。</li>
+        <li><strong>Preview</strong> — 對目前選取項目跑一個指令顯示在右邊（例如 <code>bat</code> 看檔案內容）。</li>
+        <li><strong>Action</strong> — 按特定鍵對選取項目執行指令（例如 Enter 用 nvim 開啟）。</li>
+      </ul>
+
+      <div class="effect-box">
+        <strong>一句話</strong>
+        television = 可重複使用的「搜尋 → 預覽 → 動作」管線，每個用途存成一個 channel。
+      </div>
+    </section>
+
+    <!-- ───────────── 2. ARCHITECTURE ───────────── -->
+    <section id="arch">
+      <h2><span class="icon">🗂️</span> 2. 設定檔架構<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+      <p>這個 repo 裡 <code>television/</code> 目錄 stow 之後會連結到 <code>~/.config/television/</code>，結構如下：</p>
+
+      <pre><code>television/
+├── <span class="fn">config.toml</span>          <span class="cmt"># 全域設定：UI、快捷鍵、shell 整合</span>
+└── <span class="fn">cable/</span>               <span class="cmt"># 所有 channel 定義（"cable" = 有線電視頻道 😄）</span>
+    ├── files.toml      <span class="cmt"># 檔案搜尋</span>
+    ├── dirs.toml       <span class="cmt"># 目錄搜尋</span>
+    ├── git-log.toml    <span class="cmt"># git log</span>
+    ├── sesh.toml       <span class="cmt"># tmux session 管理</span>
+    └── ... 共 61 個 channel</code></pre>
+
+      <div class="arch">
+        <div class="arch-row">
+          <div class="arch-node root">
+            <h4>📄 config.toml</h4>
+            <p>全域行為：UI 外觀、key bindings、shell 整合規則、預設 channel。所有 channel 共用這些設定。</p>
+          </div>
+        </div>
+        <div class="arrow-down">▼ 提供全域設定給</div>
+        <div class="arch-row">
+          <div class="arch-node">
+            <h4>📺 cable/*.toml</h4>
+            <p>每個檔 = 一個 channel。各自定義 source / preview / 專屬 actions。可覆寫全域 UI。</p>
+          </div>
+          <div class="arch-node">
+            <h4>⌨️ shell 整合</h4>
+            <p>在終端機打指令時按 <code>Ctrl-T</code>，依指令自動觸發對應 channel（見第 8 節）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <strong>💡 cable 名稱由來</strong>　television（電視）→ 頻道從「cable（有線電視）」來，命名上的小幽默。
+        要新增 channel，就是在 <code>cable/</code> 丟一個新的 <code>.toml</code>。
+      </div>
+    </section>
+
+    <!-- ───────────── 3. CONFIG.TOML ───────────── -->
+    <section id="config">
+      <h2><span class="icon">⚙️</span> 3. config.toml 詳解<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+
+      <h3>3.1 一般設定</h3>
+      <pre><code><span class="var">tick_rate</span> = <span class="num">50</span>              <span class="cmt"># UI 重繪頻率（每秒 tick 數）</span>
+<span class="var">default_channel</span> = <span class="str">"files"</span>   <span class="cmt"># 直接打 tv（不帶參數）時開啟的 channel</span>
+<span class="var">history_size</span> = <span class="num">200</span>          <span class="cmt"># 搜尋歷史保留筆數</span>
+<span class="var">global_history</span> = <span class="kw">false</span>      <span class="cmt"># false = 歷史依 channel 分開；true = 全部共用</span></code></pre>
+
+      <h3>3.2 UI 外觀 <code>[ui]</code></h3>
+      <table>
+        <tr><th>設定</th><th>值</th><th>說明</th></tr>
+        <tr><td><code>ui_scale</code></td><td>100</td><td>UI 佔螢幕百分比（100 = 滿版）</td></tr>
+        <tr><td><code>orientation</code></td><td>landscape</td><td>橫向排版（landscape / portrait）</td></tr>
+        <tr><td><code>theme</code></td><td>catppuccin</td><td>配色主題，跟你整套 dotfiles 一致</td></tr>
+      </table>
+
+      <p>下面是各個面板（panel）的子設定：</p>
+      <table>
+        <tr><th>區塊</th><th>重點設定</th><th>意義</th></tr>
+        <tr><td><code>[ui.input_bar]</code></td><td><code>position = "top"</code>、<code>prompt = "&gt;"</code></td><td>輸入框在上方，提示符號為 <code>&gt;</code></td></tr>
+        <tr><td><code>[ui.status_bar]</code></td><td><code>separator_open/close</code>（bubble 樣式）</td><td>底部狀態列的圓角分隔符</td></tr>
+        <tr><td><code>[ui.results_panel]</code></td><td><code>border_type = "rounded"</code></td><td>結果清單面板圓角邊框</td></tr>
+        <tr><td><code>[ui.preview_panel]</code></td><td><code>size = 65</code>、<code>scrollbar = true</code></td><td>預覽面板佔 65% 寬、顯示捲軸</td></tr>
+        <tr><td><code>[ui.help_panel]</code></td><td><code>hidden = true</code></td><td>說明面板預設隱藏（按 <code>F9</code> 開）</td></tr>
+        <tr><td><code>[ui.remote_control]</code></td><td><code>sort_alphabetically = true</code></td><td>channel 選單依字母排序、顯示描述</td></tr>
+      </table>
+
+      <div class="tip-box">
+        <strong>💡 theme override</strong>　config 裡示範了 <code>[ui.theme_overrides]</code>（目前註解掉）。
+        想微調個別顏色不必另寫整套 theme，例如 <code>background = "#000000"</code> 即可。
+      </div>
+
+      <h3>3.3 全域快捷鍵 <code>[keybindings]</code></h3>
+      <p>這些鍵在「任何 channel」都生效（channel 可再覆寫）。完整速查見<a href="#keys" style="color:var(--blue)">第 9 節</a>。重點分群：</p>
+      <ul>
+        <li><strong>離開</strong>：<code>esc</code> / <code>ctrl-c</code> → quit</li>
+        <li><strong>移動</strong>：上下方向鍵，或 vim/emacs 風格 <code>ctrl-n/p</code>、<code>ctrl-j/k</code></li>
+        <li><strong>多選</strong>：<code>tab</code> 選取並往下、<code>enter</code> 確認</li>
+        <li><strong>預覽捲動</strong>：<code>ctrl-d / ctrl-u</code> 半頁捲動、<code>ctrl-f</code> 切換多個 preview</li>
+        <li><strong>面板開關</strong>：<code>ctrl-r</code> 遙控器（換 channel）、<code>ctrl-o</code> 預覽、<code>ctrl-t</code> 版面、<code>F9</code> 說明</li>
+      </ul>
+
+      <h3>3.4 Shell 整合 <code>[shell_integration]</code></h3>
+      <p>這是讓 <code>tv</code> 能在你打指令時自動跳出對應 channel 的關鍵設定，獨立講在<a href="#shell" style="color:var(--blue)">第 8 節</a>。</p>
+    </section>
+
+    <!-- ───────────── 4. CHANNEL ANATOMY ───────────── -->
+    <section id="channel-anatomy">
+      <h2><span class="icon">🧬</span> 4. Channel 結構解剖<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+      <p>每個 <code>cable/*.toml</code> 都是同一套結構。用最簡單的 <code>files.toml</code> 當範本：</p>
+
+      <pre><code><span class="sym">[metadata]</span>
+<span class="var">name</span> = <span class="str">"files"</span>
+<span class="var">description</span> = <span class="str">"A channel to select files and directories"</span>
+<span class="var">requirements</span> = [<span class="str">"fd"</span>, <span class="str">"bat"</span>]        <span class="cmt"># 需要安裝的外部工具</span>
+
+<span class="sym">[source]</span>                                  <span class="cmt"># ← 候選清單從哪來</span>
+<span class="var">command</span> = [<span class="str">"fd -t f"</span>, <span class="str">"fd -t f -H"</span>, <span class="str">"fd -t f -H -I"</span>]  <span class="cmt"># 多來源可用 Ctrl-S 循環切換</span>
+
+<span class="sym">[preview]</span>                                 <span class="cmt"># ← 選取項目怎麼預覽</span>
+<span class="var">command</span> = <span class="str">"bat -n --color=always '{}'"</span>      <span class="cmt"># {} = 目前選取的那一行</span>
+<span class="var">env</span> = { <span class="var">BAT_THEME</span> = <span class="str">"ansi"</span> }
+
+<span class="sym">[keybindings]</span>                             <span class="cmt"># ← 此 channel 專屬按鍵</span>
+<span class="var">shortcut</span> = <span class="str">"f1"</span>                        <span class="cmt"># 從別的 channel 按 F1 直接跳來</span>
+<span class="var">enter</span> = <span class="str">"actions:edit"</span>               <span class="cmt"># Enter 觸發下面定義的 edit action</span>
+<span class="var">ctrl-up</span> = <span class="str">"actions:goto_parent_dir"</span>
+
+<span class="sym">[actions.edit]</span>                            <span class="cmt"># ← 自訂動作</span>
+<span class="var">description</span> = <span class="str">"用預設編輯器開啟選取項目"</span>
+<span class="var">command</span> = <span class="str">"nvim '{}'"</span>
+<span class="var">shell</span> = <span class="str">"nu"</span>                          <span class="cmt"># 用哪個 shell 跑這指令</span>
+<span class="var">mode</span> = <span class="str">"execute"</span>                       <span class="cmt"># execute = 跑完離開；fork = 跑完留在 tv</span>
+
+<span class="sym">[ui.preview_panel]</span>
+<span class="var">hidden</span> = <span class="kw">true</span>                         <span class="cmt"># 此 channel 覆寫全域：預設不顯示預覽</span></code></pre>
+
+      <h3>各區塊速記</h3>
+      <table>
+        <tr><th>區塊</th><th>角色</th><th>關鍵欄位</th></tr>
+        <tr><td><code>[metadata]</code></td><td>名稱、描述、依賴工具</td><td><code>name</code> · <code>description</code> · <code>requirements</code></td></tr>
+        <tr><td><code>[source]</code></td><td>產生候選清單的指令</td><td><code>command</code> · <code>display</code> · <code>output</code> · <code>ansi</code></td></tr>
+        <tr><td><code>[preview]</code></td><td>預覽選取項目</td><td><code>command</code> · <code>env</code> · <code>offset</code></td></tr>
+        <tr><td><code>[keybindings]</code></td><td>按鍵 → 動作對應</td><td><code>shortcut</code> · <code>enter</code> · <code>ctrl-*</code></td></tr>
+        <tr><td><code>[actions.NAME]</code></td><td>可被按鍵觸發的動作</td><td><code>command</code> · <code>mode</code> · <code>shell</code></td></tr>
+        <tr><td><code>[ui]</code></td><td>覆寫該 channel 的版面</td><td><code>layout</code> · <code>preview_panel</code></td></tr>
+      </table>
+
+      <div class="effect-box">
+        <strong>source vs output vs display</strong>
+        <code>command</code> 是原始輸出；<code>display</code> 改「顯示給你看的樣子」；
+        <code>output</code> 改「實際傳給 action 的值」。三者分離 → 可以顯示漂亮、傳值乾淨。
+      </div>
+
+      <h3>mode：execute vs fork</h3>
+      <div class="keybind-grid">
+        <div class="keybind-item"><span class="key">execute</span><span class="keybind-desc">跑完指令後關閉 tv（例如用 nvim 開檔案）</span></div>
+        <div class="keybind-item"><span class="key">fork</span><span class="keybind-desc">跑完後留在 tv 繼續操作（例如 git add 後繼續選下一個）</span></div>
+      </div>
+    </section>
+
+    <!-- ───────────── 5. TEMPLATES ───────────── -->
+    <section id="templates">
+      <h2><span class="icon">🔧</span> 5. Template 語法（最重要的觀念）<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+      <p>
+        channel 裡到處出現的 <code>{...}</code> 是 television 的 <strong>template placeholder</strong>。
+        看懂它，所有 channel 你都讀得懂。基本款 <code>{}</code> = 目前選取的整行文字。
+      </p>
+
+      <h3>常用 transformer（用 <code>|</code> 串接，像 shell pipe）</h3>
+      <table>
+        <tr><th>語法</th><th>作用</th><th>範例</th></tr>
+        <tr><td><code>{}</code></td><td>整行原始字串</td><td>選到的檔名/文字</td></tr>
+        <tr><td><code>{split:X:N}</code></td><td>用 <code>X</code> 切開，取第 N 段（0 起算）</td><td><code>{split: :1}</code> 取第二欄</td></tr>
+        <tr><td><code>{split:X:N..M}</code></td><td>取一段範圍（slice）</td><td><code>{split:\::..2}</code> 取前兩段</td></tr>
+        <tr><td><code>{strip_ansi}</code></td><td>去掉 ANSI 顏色碼</td><td>source 有 <code>--color=always</code> 時必用</td></tr>
+        <tr><td><code>{join:X}</code></td><td>把多段用 <code>X</code> 接回去</td><td><code>{...|join: }</code> 用空格接回</td></tr>
+      </table>
+
+      <h3>實戰：讀懂 git-log 的 placeholder</h3>
+      <p>git log 那行長這樣（含顏色與圖形）：<code>* a1b2c3d - (HEAD) 修個 bug (2 hours ago) &lt;jason&gt;</code></p>
+      <pre><code><span class="var">output</span> = <span class="str">"{strip_ansi|split: :1}"</span></code></pre>
+      <p>拆解這條管線：</p>
+      <ul>
+        <li><code>strip_ansi</code> → 先把顏色碼拿掉</li>
+        <li><code>split: :1</code> → 用空格切開，取第 1 段（0 是 <code>*</code>，1 就是 commit hash <code>a1b2c3d</code>）</li>
+      </ul>
+      <p>所以不管那行顯示多花俏，傳給 <code>git show</code>、<code>git cherry-pick</code> 的永遠是乾淨的 commit hash。</p>
+
+      <h3>另一個：todo-comments 帶行號跳轉</h3>
+      <p>ripgrep 輸出格式是 <code>檔案:行號:內容</code>，channel 這樣處理：</p>
+      <pre><code><span class="var">command</span> = <span class="str">"${EDITOR:-vim} '+{strip_ansi|split:\\::1}' '{strip_ansi|split:\\::0}'"</span>
+                          <span class="cmt">↑ 第1段=行號         ↑ 第0段=檔名</span></code></pre>
+      <p>
+        <code>split:\::0</code> 用冒號切、取檔名；<code>split:\::1</code> 取行號。
+        組成 <code>vim +行號 檔名</code> → 直接跳到那一行。（<code>\:</code> 是跳脫冒號當分隔符。）
+      </p>
+
+      <div class="tip-box">
+        <strong>💡 讀 channel 的訣竅</strong>　看到一長串 <code>{strip_ansi|split:...|join:...}</code> 不要怕，
+        從左到右當 pipe 唸：去色 → 切欄 → 取第幾段 → 接回去。本質就是在「整理 source 的某一欄」當參數。
+      </div>
+    </section>
+
+    <!-- ───────────── 6. CHANNEL LIST ───────────── -->
+    <section id="channel-list">
+      <h2><span class="icon">📋</span> 6. 全部 61 個 Channel<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+      <p>依用途分類，方便挑要記哪些。<code>tv 名稱</code> 即可直接開啟任一 channel。</p>
+
+      <div class="cat-grid">
+        <div class="cat-card">
+          <h4>📁 檔案與目錄</h4>
+          <div class="chips">
+            <span class="chip">files</span><span class="chip">dirs</span><span class="chip">dotfiles</span>
+            <span class="chip">recent-files</span><span class="chip">downloads</span><span class="chip">text</span>
+            <span class="chip">todo-comments</span><span class="chip">zoxide</span><span class="chip">path</span>
+            <span class="chip">mounts</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>🌿 Git</h4>
+          <div class="chips">
+            <span class="chip">git-repos</span><span class="chip">git-branch</span><span class="chip">git-log</span>
+            <span class="chip">git-diff</span><span class="chip">git-files</span><span class="chip">git-stash</span>
+            <span class="chip">git-tags</span><span class="chip">git-remotes</span><span class="chip">git-reflog</span>
+            <span class="chip">git-worktrees</span><span class="chip">git-submodules</span><span class="chip">wt-list</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>🐙 GitHub</h4>
+          <div class="chips">
+            <span class="chip">gh-prs</span><span class="chip">gh-issues</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>🐳 Docker</h4>
+          <div class="chips">
+            <span class="chip">docker-containers</span><span class="chip">docker-images</span>
+            <span class="chip">docker-compose</span><span class="chip">docker-volumes</span><span class="chip">docker-networks</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>☸️ Kubernetes</h4>
+          <div class="chips">
+            <span class="chip">k8s-pods</span><span class="chip">k8s-deployments</span>
+            <span class="chip">k8s-services</span><span class="chip">k8s-contexts</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>☁️ AWS</h4>
+          <div class="chips">
+            <span class="chip">aws-instances</span><span class="chip">aws-buckets</span><span class="chip">aws-profiles</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>🖥️ 終端 / Session</h4>
+          <div class="chips">
+            <span class="chip">sesh</span><span class="chip">tmux-sessions</span><span class="chip">tmux-windows</span>
+            <span class="chip">procs</span><span class="chip">ssh-hosts</span><span class="chip">crontab</span>
+            <span class="chip">env</span><span class="chip">alias</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>📜 Shell 歷史</h4>
+          <div class="chips">
+            <span class="chip">zsh-history</span><span class="chip">bash-history</span><span class="chip">nu-history</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>📦 套件管理</h4>
+          <div class="chips">
+            <span class="chip">brew-packages</span><span class="chip">npm-packages</span><span class="chip">npm-scripts</span>
+            <span class="chip">node-packages</span><span class="chip">pip-packages</span><span class="chip">python-venvs</span>
+            <span class="chip">cargo-crates</span><span class="chip">cargo-commands</span><span class="chip">rustup</span>
+            <span class="chip">make-targets</span>
+          </div>
+        </div>
+        <div class="cat-card">
+          <h4>🔧 其他工具</h4>
+          <div class="chips">
+            <span class="chip">channels</span><span class="chip">man-pages</span><span class="chip">fonts</span>
+            <span class="chip">unicode</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <strong>💡 channels channel</strong>　忘記有哪些 channel？直接 <code>tv channels</code>（或在 tv 裡按 <code>Ctrl-R</code>）
+        會列出全部 channel，選了 Enter 就跳過去。它是「找頻道的頻道」。
+      </div>
+    </section>
+
+    <!-- ───────────── 7. DEEP DIVE ───────────── -->
+    <section id="deep-dive">
+      <h2><span class="icon">🔬</span> 7. 重點 Channel 拆解<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+      <p>挑幾個你最常用、或設計上有亮點的 channel 詳細看。</p>
+
+      <h3>📁 files — 預設頻道（F1）</h3>
+      <table>
+        <tr><td>source</td><td><code>fd -t f</code> →（Ctrl-S）→ 含隱藏 → 含被 gitignore 的</td></tr>
+        <tr><td>preview</td><td><code>bat</code> 帶行號與顏色，但 <code>hidden = true</code> 預設關閉預覽（要看按 <code>Ctrl-O</code>）</td></tr>
+        <tr><td>Enter</td><td>用 <code>nvim</code> 開啟</td></tr>
+        <tr><td>Ctrl-↑</td><td>跳到上層目錄重開（<code>tv files ..</code>）</td></tr>
+      </table>
+
+      <h3>📂 dirs — 目錄（F2）</h3>
+      <p>source 是 <code>fd -t d</code>，預覽用 <code>eza -la</code> 列出目錄內容。action <code>cd</code> 會在選取目錄開一個新 shell。</p>
+
+      <h3>🌿 git-branch — 分支切換</h3>
+      <pre><code><span class="var">command</span> = <span class="str">"git --no-pager branch --all --format=\"%(refname:short)\""</span>
+<span class="var">output</span>  = <span class="str">"{split: :0}"</span>     <span class="cmt"># 取分支名第一欄</span></code></pre>
+      <p>一個 channel 把整套分支操作收進按鍵：</p>
+      <div class="keybind-grid">
+        <div class="keybind-item"><span class="key">Enter</span><span class="keybind-desc">checkout 切換分支</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-D</span><span class="keybind-desc">刪除分支</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-M</span><span class="keybind-desc">merge 進當前分支</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-R</span><span class="keybind-desc">rebase 到選取分支</span></div>
+      </div>
+
+      <h3>🌿 git-log — 提交歷史</h3>
+      <p>source 用花俏的 <code>--graph --pretty --color=always</code>，靠 <code>output = "{strip_ansi|split: :1}"</code> 萃取 hash。<code>no_sort + frecency = false</code> 保留 git 原始時間順序。動作：<code>Ctrl-Y</code> cherry-pick、<code>Ctrl-R</code> revert、<code>Ctrl-O</code> checkout。</p>
+
+      <h3>🌿 git-diff — 暫存區工作流（portrait 版面）</h3>
+      <p>覆寫了 <code>[ui] layout = "portrait"</code>（直向，預覽在下方更適合看 diff）。動作 <code>Ctrl-S</code> stage、<code>Ctrl-R</code> restore 都用 <code>mode = "fork"</code>，stage 完留在 tv 繼續處理其他檔。</p>
+
+      <h3>🖥️ sesh — session 管理（亮點）</h3>
+      <pre><code><span class="var">command</span> = [<span class="str">"sesh list --icons"</span>, <span class="str">"sesh list -t --icons"</span>, <span class="str">"sesh list -c --icons"</span>,
+           <span class="str">"sesh list -z --icons"</span>, <span class="str">"fd -H -d 2 -t d -E .Trash . ~"</span>]
+<span class="var">output</span> = <span class="str">"{strip_ansi|split: :1..|join: }"</span>   <span class="cmt"># 去掉開頭 icon，留 session 名</span></code></pre>
+      <p>整合 tmux session、zoxide 目錄、設定路徑於一處。Enter <code>connect</code> 連線，<code>Ctrl-D</code> 砍掉 session 並 reload 清單。<code>split: :1..|join: </code> 是把第一個 icon 欄丟掉、其餘用空格接回（處理含空白的名稱）。</p>
+
+      <h3>🔍 text — 全文搜尋並跳行</h3>
+      <p>用 <code>rg</code> 搜所有檔案內容，<code>offset</code> 讓預覽自動捲到命中行，Enter 用 <code>$EDITOR +行號</code> 開檔跳到該行。<code>todo-comments</code> 是它的近親，只是搜尋條件鎖定 <code>TODO/FIXME/HACK/XXX/BUG/WARN</code>。</p>
+
+      <h3>📺 channels — 找頻道的頻道</h3>
+      <pre><code><span class="var">command</span> = <span class="str">"tv list-channels"</span>
+<span class="sym">[actions.zap]</span> <span class="var">command</span> = <span class="str">"tv '{}'"</span>   <span class="cmt"># Enter 直接切換到選取的 channel</span></code></pre>
+    </section>
+
+    <!-- ───────────── 8. SHELL INTEGRATION ───────────── -->
+    <section id="shell">
+      <h2><span class="icon">🐚</span> 8. Shell 整合（殺手級功能）<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+      <p>
+        這讓 <code>tv</code> 變成你 shell 的智慧補全。在終端機打到一半按 <code>Ctrl-T</code>，
+        television 會<strong>依你打的指令猜你要找什麼</strong>，跳出對應 channel。
+      </p>
+
+      <h3>運作流程</h3>
+      <div class="arch">
+        <div class="arch-row">
+          <div class="arch-node"><h4>1️⃣ 你輸入</h4><p>例如在 prompt 打 <code>git checkout </code></p></div>
+          <div class="arch-node"><h4>2️⃣ 按 Ctrl-T</h4><p>觸發 smart_autocomplete</p></div>
+          <div class="arch-node"><h4>3️⃣ 比對 trigger</h4><p>「git checkout」對應到 <code>git-branch</code></p></div>
+          <div class="arch-node root"><h4>4️⃣ 跳出 channel</h4><p>選分支 → 名稱自動填回指令列</p></div>
+        </div>
+      </div>
+
+      <h3>channel_triggers 對應表（你設定的）</h3>
+      <table>
+        <tr><th>觸發 channel</th><th>當你打這些指令時</th></tr>
+        <tr><td><code>alias</code></td><td><code>alias</code> · <code>unalias</code></td></tr>
+        <tr><td><code>env</code></td><td><code>export</code> · <code>unset</code></td></tr>
+        <tr><td><code>dirs</code></td><td><code>cd</code> · <code>ls</code> · <code>rmdir</code> · <code>z</code></td></tr>
+        <tr><td><code>files</code></td><td><code>cat</code> · <code>vim</code> · <code>bat</code> · <code>cp</code> · <code>mv</code> · <code>rm</code> · <code>tar</code> · <code>chmod</code> …等檔案操作</td></tr>
+        <tr><td><code>git-diff</code></td><td><code>git add</code> · <code>git restore</code></td></tr>
+        <tr><td><code>git-branch</code></td><td><code>git checkout</code> · <code>git branch</code> · <code>git merge</code> · <code>git rebase</code> · <code>git pull/push</code></td></tr>
+        <tr><td><code>git-log</code></td><td><code>git log</code> · <code>git show</code></td></tr>
+        <tr><td><code>docker-images</code></td><td><code>docker run</code></td></tr>
+        <tr><td><code>git-repos</code></td><td><code>nvim</code> · <code>code</code> · <code>hx</code> · <code>git clone</code></td></tr>
+      </table>
+
+      <h3>兩個觸發鍵</h3>
+      <div class="keybind-grid">
+        <div class="keybind-item"><span class="key">Ctrl-T</span><span class="keybind-desc">smart_autocomplete — 依目前指令猜 channel</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-R</span><span class="keybind-desc">command_history — 模糊搜尋 shell 歷史指令</span></div>
+      </div>
+      <div class="effect-box">
+        <strong>fallback_channel = "files"</strong>
+        如果你打的指令沒對到任何 trigger，按 Ctrl-T 就退回 <code>files</code> channel。
+      </div>
+      <div class="warn-box">
+        <strong>⚠️ 注意</strong>　shell 整合需要在你的 <code>.zshrc</code> 安裝 hook（<code>tv init zsh</code>）。
+        這份設定只定義「觸發規則」，實際綁定要 shell 端啟用才會生效。
+      </div>
+    </section>
+
+    <!-- ───────────── 9. KEYS ───────────── -->
+    <section id="keys">
+      <h2><span class="icon">⌨️</span> 9. 全域快捷鍵速查<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+
+      <h3>離開 / 導覽 / 選取</h3>
+      <div class="keybind-grid">
+        <div class="keybind-item"><span class="key">Esc / Ctrl-C</span><span class="keybind-desc">離開</span></div>
+        <div class="keybind-item"><span class="key">↓ / Ctrl-N / Ctrl-J</span><span class="keybind-desc">下一項</span></div>
+        <div class="keybind-item"><span class="key">↑ / Ctrl-P / Ctrl-K</span><span class="keybind-desc">上一項</span></div>
+        <div class="keybind-item"><span class="key">Tab</span><span class="keybind-desc">多選（往下）</span></div>
+        <div class="keybind-item"><span class="key">Shift-Tab</span><span class="keybind-desc">多選（往上）</span></div>
+        <div class="keybind-item"><span class="key">Enter</span><span class="keybind-desc">確認 / 觸發主動作</span></div>
+      </div>
+
+      <h3>歷史 / 預覽</h3>
+      <div class="keybind-grid">
+        <div class="keybind-item"><span class="key">Ctrl-↑ / Ctrl-↓</span><span class="keybind-desc">上/下一筆搜尋歷史</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-D / Ctrl-U</span><span class="keybind-desc">預覽半頁下/上捲</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-F</span><span class="keybind-desc">循環切換多個 preview</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-Y</span><span class="keybind-desc">複製選取項目到剪貼簿</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-S</span><span class="keybind-desc">循環切換多個 source</span></div>
+      </div>
+
+      <h3>面板開關</h3>
+      <div class="keybind-grid">
+        <div class="keybind-item"><span class="key">Ctrl-R</span><span class="keybind-desc">遙控器（切換 channel）</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-X</span><span class="keybind-desc">動作選單（action picker）</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-O</span><span class="keybind-desc">開關預覽面板</span></div>
+        <div class="keybind-item"><span class="key">Ctrl-T</span><span class="keybind-desc">切換版面（landscape/portrait）</span></div>
+        <div class="keybind-item"><span class="key">F9</span><span class="keybind-desc">說明面板</span></div>
+        <div class="keybind-item"><span class="key">F10</span><span class="keybind-desc">狀態列</span></div>
+      </div>
+
+      <h3>Channel 直跳捷徑</h3>
+      <div class="keybind-grid">
+        <div class="keybind-item"><span class="key">F1</span><span class="keybind-desc">files</span></div>
+        <div class="keybind-item"><span class="key">F2</span><span class="keybind-desc">dirs</span></div>
+        <div class="keybind-item"><span class="key">F3</span><span class="keybind-desc">env</span></div>
+      </div>
+      <div class="tip-box">
+        <strong>💡</strong>　<code>Ctrl-T</code> 有兩個身分：在 <strong>tv 裡面</strong>是「切版面」；在 <strong>shell prompt</strong> 是「smart autocomplete」。看你在哪按。
+      </div>
+    </section>
+
+    <!-- ───────────── 10. QUICKSTART ───────────── -->
+    <section id="quickstart">
+      <h2><span class="icon">🚀</span> 10. 快速上手 &amp; 自訂<span class="sec-check"><span class="box">✓</span>已學會</span></h2>
+
+      <h3>常用起手式</h3>
+      <pre><code><span class="cmt"># 開預設 channel（files）</span>
+tv
+
+<span class="cmt"># 直接開指定 channel</span>
+tv git-branch
+tv sesh
+tv docker-containers
+
+<span class="cmt"># 帶初始路徑/查詢</span>
+tv files ~/code
+tv text                 <span class="cmt"># 全文搜尋當前目錄</span>
+
+<span class="cmt"># 列出所有 channel</span>
+tv list-channels</code></pre>
+
+      <h3>新增一個自己的 channel</h3>
+      <p>在 <code>cable/</code> 建一個 <code>my-thing.toml</code>，最小可用範本：</p>
+      <pre><code><span class="sym">[metadata]</span>
+<span class="var">name</span> = <span class="str">"my-thing"</span>
+<span class="var">description</span> = <span class="str">"我的自訂頻道"</span>
+
+<span class="sym">[source]</span>
+<span class="var">command</span> = <span class="str">"some-command-that-lists-things"</span>
+
+<span class="sym">[preview]</span>
+<span class="var">command</span> = <span class="str">"echo '{}'"</span>
+
+<span class="sym">[keybindings]</span>
+<span class="var">enter</span> = <span class="str">"actions:do-it"</span>
+
+<span class="sym">[actions.do-it]</span>
+<span class="var">command</span> = <span class="str">"echo '你選了 {}'"</span>
+<span class="var">mode</span> = <span class="str">"execute"</span></code></pre>
+      <p>存檔後 <code>tv my-thing</code> 立刻可用，無需重啟。</p>
+
+      <h3>套用到本機</h3>
+      <div class="warn-box">
+        <strong>⚠️ 重要</strong>　這個 repo（<code>~/code/oss/dotfiles</code>）只是版控參考，<strong>不要</strong>直接 stow 到本機。
+        本機 dotfiles 在 <code>~/code/personal/dotfiles</code>，套用設定請在那邊跑 <code>./setup.sh</code>。
+      </div>
+
+      <div class="effect-box">
+        <strong>學習路徑建議</strong>
+        先把 <code>F1/F2/Ctrl-R/Ctrl-T(shell)</code> 練成肌肉記憶 → 再記 git 三件套（branch/log/diff）→
+        最後 sesh 取代你切換專案的習慣。其餘 channel 用到再查第 6 節。
+      </div>
+    </section>
+
+    <hr />
+    <p style="text-align:center; color:var(--overlay0); font-size:0.8rem;">
+      📺 Television 設定學習文件 · 基於 <code>~/code/oss/dotfiles/television/</code> · Catppuccin 主題
+    </p>
+  </main>
+
+  <script>
+    // 捲動時高亮側欄當前段落
+    const links = [...document.querySelectorAll('nav a')];
+    const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+    const onScroll = () => {
+      let idx = 0;
+      sections.forEach((s, i) => { if (s && s.getBoundingClientRect().top <= 120) idx = i; });
+      links.forEach(a => a.classList.remove('active'));
+      if (links[idx]) links[idx].classList.add('active');
+    };
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // ── 學習進度核取方塊 + localStorage 持久化 ──
+    const STORE_KEY = 'tv-guide-progress';
+    const allSections = [...document.querySelectorAll('main section[id]')];
+    const total = allSections.length;
+    const countEl = document.getElementById('progress-count');
+    const barEl   = document.getElementById('progress-bar');
+    const noteEl  = document.getElementById('progress-note');
+
+    const load = () => {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+      catch (e) { return {}; }
+    };
+    const save = (state) => localStorage.setItem(STORE_KEY, JSON.stringify(state));
+
+    const render = () => {
+      const state = load();
+      let done = 0;
+      allSections.forEach(sec => {
+        const on = !!state[sec.id];
+        if (on) done++;
+        sec.classList.toggle('done', on);
+        const chk = sec.querySelector('.sec-check');
+        if (chk) chk.classList.toggle('done', on);
+      });
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      countEl.textContent = `${done} / ${total}`;
+      barEl.style.width = pct + '%';
+      if (done === 0)        noteEl.textContent = '讀完一個章節，點右上角的核取方塊標記為「已學會」。進度會自動存在瀏覽器裡。';
+      else if (done < total) noteEl.textContent = `進度 ${pct}% —— 繼續加油！還剩 ${total - done} 個章節。`;
+      else                   noteEl.textContent = '🎉 全部章節都學完了！你已經掌握這套 television 設定。';
+    };
+
+    allSections.forEach(sec => {
+      const chk = sec.querySelector('.sec-check');
+      if (!chk) return;
+      chk.addEventListener('click', () => {
+        const state = load();
+        state[sec.id] = !state[sec.id];
+        if (!state[sec.id]) delete state[sec.id];
+        save(state);
+        render();
+      });
+    });
+
+    document.getElementById('progress-reset').addEventListener('click', () => {
+      localStorage.removeItem(STORE_KEY);
+      render();
+    });
+
+    render();
+  </script>
+<a href="../" id="back-home-btn" style="position:fixed;top:16px;left:16px;z-index:9999;display:flex;align-items:center;gap:6px;padding:8px 14px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#aaa;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;" onmouseover="this.style.borderColor='#555';this.style.color='#fff'" onmouseout="this.style.borderColor='#333';this.style.color='#aaa'">← Home</a>
+</body>
+</html>
