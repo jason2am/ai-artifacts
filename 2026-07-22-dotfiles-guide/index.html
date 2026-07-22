@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dotfiles 完整教學指南</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --base:#1e1e2e; --mantle:#181825; --crust:#11111b; --surface0:#313244;
+    --surface1:#45475a; --surface2:#585b70; --text:#cdd6f4; --subtext1:#bac2de;
+    --subtext0:#a6adc8; --overlay1:#7f849c; --blue:#89b4fa; --lavender:#b4befe;
+    --sapphire:#74c7ec; --sky:#89dceb; --teal:#94e2d5; --green:#a6e3a1;
+    --yellow:#f9e2af; --peach:#fab387; --maroon:#eba0ac; --red:#f38ba8;
+    --mauve:#cba6f7; --pink:#f5c2e7; --flamingo:#f2cdcd; --rosewater:#f5e0dc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--base);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+    line-height:1.7;font-size:16px;
+  }
+  .layout{display:flex;max-width:1600px;margin:0 auto}
+  /* Sidebar */
+  nav{
+    width:280px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;
+    background:var(--mantle);border-right:1px solid var(--surface0);padding:24px 0;
+  }
+  nav .brand{padding:0 24px 16px;font-size:20px;font-weight:800;color:var(--mauve);letter-spacing:.5px}
+  nav .brand small{display:block;font-size:11px;color:var(--overlay1);font-weight:500;margin-top:4px;letter-spacing:0}
+  nav a{
+    display:block;padding:7px 24px;color:var(--subtext0);text-decoration:none;
+    font-size:14px;border-left:3px solid transparent;transition:all .15s;
+  }
+  nav a:hover{color:var(--text);background:var(--surface0);border-left-color:var(--mauve)}
+  nav .grp{padding:16px 24px 4px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--overlay1);font-weight:700}
+  /* Main */
+  main{flex:1;padding:48px 56px;max-width:1000px;min-width:0}
+  header.hero{margin-bottom:48px;padding-bottom:32px;border-bottom:1px solid var(--surface0)}
+  header.hero h1{font-size:40px;font-weight:800;background:linear-gradient(120deg,var(--mauve),var(--sapphire),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2}
+  header.hero p{color:var(--subtext1);margin-top:12px;font-size:17px;max-width:70ch}
+  .pills{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px}
+  .pill{background:var(--surface0);color:var(--subtext1);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  section{margin-bottom:56px;scroll-margin-top:24px}
+  h2{font-size:28px;font-weight:700;color:var(--lavender);margin-bottom:8px;display:flex;align-items:center;gap:12px}
+  h2 .ico{font-size:26px}
+  h2 + .sub{color:var(--overlay1);font-size:14px;margin-bottom:24px;font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  h3{font-size:19px;color:var(--sky);margin:28px 0 12px;font-weight:700}
+  h4{font-size:15px;color:var(--peach);margin:20px 0 8px;font-weight:700}
+  p{margin-bottom:14px;color:var(--subtext1)}
+  a.ext{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+  ul,ol{margin:0 0 16px 24px}
+  li{margin-bottom:8px;color:var(--subtext1)}
+  code{background:var(--crust);color:var(--peach);padding:2px 7px;border-radius:5px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13.5px}
+  kbd{background:var(--surface1);border:1px solid var(--surface2);border-bottom-width:2px;border-radius:5px;padding:2px 8px;font-family:ui-monospace,monospace;font-size:12.5px;color:var(--text);white-space:nowrap}
+  pre{background:var(--crust);border:1px solid var(--surface0);border-radius:12px;padding:18px 20px;overflow-x:auto;margin:0 0 20px;position:relative}
+  pre code{background:none;color:var(--text);padding:0;font-size:13px;line-height:1.6}
+  .cmt{color:var(--overlay1)}
+  .k{color:var(--mauve)}
+  .s{color:var(--green)}
+  .fn{color:var(--blue)}
+  /* cards & tables */
+  .card{background:var(--mantle);border:1px solid var(--surface0);border-radius:14px;padding:22px 26px;margin-bottom:20px}
+  .card.accent{border-left:4px solid var(--mauve)}
+  table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--surface0)}
+  th{color:var(--lavender);font-weight:700;background:var(--mantle)}
+  td code{font-size:12.5px}
+  tr:hover td{background:var(--mantle)}
+  .note{border-radius:12px;padding:16px 20px;margin:0 0 20px;font-size:14.5px}
+  .note .t{font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .warn{background:rgba(243,139,168,.1);border:1px solid var(--red)}
+  .warn .t{color:var(--red)}
+  .tip{background:rgba(166,227,161,.1);border:1px solid var(--green)}
+  .tip .t{color:var(--green)}
+  .info{background:rgba(137,180,250,.1);border:1px solid var(--blue)}
+  .info .t{color:var(--blue)}
+  .mermaid{background:var(--mantle);border:1px solid var(--surface0);border-radius:14px;padding:24px;margin-bottom:24px;text-align:center;overflow-x:auto}
+  .kbdtable td:first-child{white-space:nowrap;width:1%}
+  .foot{border-top:1px solid var(--surface0);margin-top:56px;padding-top:24px;color:var(--overlay1);font-size:13px}
+  @media(max-width:900px){
+    nav{display:none} main{padding:28px 20px}
+    header.hero h1{font-size:30px}
+  }
+  .toc-toggle{display:none}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand">⚙️ Dotfiles Guide<small>macOS · GNU Stow · Catppuccin</small></div>
+  <div class="grp">開始</div>
+  <a href="#overview">總覽與架構</a>
+  <a href="#stow">Stow 運作原理</a>
+  <a href="#warning">⚠️ 重要注意事項</a>
+  <div class="grp">Shell 環境</div>
+  <a href="#zsh">Zsh (.zshrc)</a>
+  <a href="#starship">Starship 提示字元</a>
+  <a href="#atuin">Atuin 歷史紀錄</a>
+  <a href="#television">Television 模糊搜尋</a>
+  <a href="#nushell">Nushell</a>
+  <div class="grp">終端機 & 多工</div>
+  <a href="#ghostty">Ghostty</a>
+  <a href="#wezterm">WezTerm</a>
+  <a href="#tmux">tmux</a>
+  <a href="#zellij">Zellij</a>
+  <div class="grp">編輯器</div>
+  <a href="#nvim">Neovim (LazyVim)</a>
+  <div class="grp">macOS 視窗 & 按鍵</div>
+  <a href="#aerospace">AeroSpace 平鋪 WM</a>
+  <a href="#sketchybar">SketchyBar 狀態列</a>
+  <a href="#skhd">skhd 快捷鍵</a>
+  <a href="#hammerspoon">Hammerspoon</a>
+  <a href="#karabiner">Karabiner</a>
+  <a href="#kindavim">kindaVim</a>
+  <div class="grp">系統 & 工具</div>
+  <a href="#nix">Nix-darwin</a>
+  <a href="#opencode">opencode (AI)</a>
+  <a href="#ghdash">gh-dash</a>
+  <a href="#ssh">SSH</a>
+</nav>
+
+<main>
+<header class="hero">
+  <h1>Dotfiles 完整教學指南</h1>
+  <p>這份文件解說一套以 <strong>GNU Stow</strong> 管理的 macOS (Apple Silicon) 開發環境設定。從 shell、終端機、多工器、編輯器，一路到平鋪式視窗管理與 AI 工具，逐項拆解每個設定檔的用途與關鍵參數。整體採用 <strong>Catppuccin Mocha</strong> 配色，並圍繞 Vim / 鍵盤導向的操作哲學。</p>
+  <div class="pills">
+    <span class="pill">GNU Stow</span><span class="pill">Zsh + Starship</span>
+    <span class="pill">tmux</span><span class="pill">Neovim / LazyVim</span>
+    <span class="pill">AeroSpace</span><span class="pill">SketchyBar</span>
+    <span class="pill">Nix-darwin</span><span class="pill">opencode</span>
+    <span class="pill">Catppuccin</span>
+  </div>
+</header>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <h2><span class="ico">🗺️</span>總覽與架構</h2>
+  <p class="sub">每個頂層目錄 = 一個工具，透過 <code>stow</code> 連結到 <code>~/.config/&lt;tool&gt;/</code></p>
+  <p>這個 repo 的核心概念很單純：<strong>每個工具的設定放在同名資料夾裡</strong>，執行 <code>stow .</code> 後就會被 symlink（符號連結）到家目錄的對應位置。整套環境可分為五層：</p>
+
+  <div class="mermaid">
+flowchart TD
+  subgraph WM["🪟 macOS 視窗 / 按鍵層"]
+    AS[AeroSpace<br/>平鋪視窗] --> SB[SketchyBar<br/>狀態列]
+    KB[Karabiner<br/>鍵位重映射]
+    SK[skhd<br/>App 快捷鍵]
+    HS[Hammerspoon<br/>自動化]
+    KV[kindaVim<br/>全域 Vim]
+  end
+  subgraph TERM["🖥️ 終端機層"]
+    GH[Ghostty<br/>主力終端]
+    WZ[WezTerm<br/>備用終端]
+  end
+  subgraph MUX["🔲 多工器層"]
+    TM[tmux<br/>主力]
+    ZJ[Zellij<br/>備用]
+  end
+  subgraph SHELL["🐚 Shell 層"]
+    ZSH[Zsh + .zshrc] --> ST[Starship 提示字元]
+    ZSH --> AT[Atuin 歷史]
+    ZSH --> TV[Television 搜尋]
+    NU[Nushell]
+  end
+  subgraph EDIT["✏️ 編輯 & AI 層"]
+    NV[Neovim / LazyVim]
+    OC[opencode AI]
+  end
+  subgraph SYS["❄️ 系統層"]
+    NIX[Nix-darwin + home-manager]
+  end
+  WM --> TERM --> MUX --> SHELL --> EDIT
+  SYS -.管理套件.-> WM
+  SYS -.管理套件.-> SHELL
+</div>
+
+  <div class="card accent">
+    <strong>操作哲學（貫穿整套設定）</strong>
+    <ul style="margin-bottom:0">
+      <li><strong>鍵盤優先</strong>：滑鼠能不碰就不碰，處處都是 Vim 風格的 <code>hjkl</code> 導航。</li>
+      <li><strong>Catppuccin Mocha</strong>：從 tmux、Starship 到 SketchyBar，配色完全一致。</li>
+      <li><strong>可攜、可版本控管</strong>：所有設定用 Stow 管理，一鍵套用到新機器。</li>
+      <li><strong>模糊搜尋無所不在</strong>：fzf / Television / Atuin，用打字取代記憶。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- STOW -->
+<section id="stow">
+  <h2><span class="ico">🔗</span>Stow 運作原理</h2>
+  <p class="sub">.stowrc · setup.sh</p>
+  <p>GNU Stow 原本是套件管理工具，這裡拿來當「symlink farm 管理器」。它會把 repo 裡的目錄結構，鏡射成家目錄裡的符號連結。</p>
+  <pre><code><span class="cmt"># .stowrc — 預先設定 stow 的行為</span>
+--target=~/.config       <span class="cmt"># 連結目標是 ~/.config（不用每次手打）</span>
+--ignore=.stowrc         <span class="cmt"># 不要連結 .stowrc 本身</span>
+--ignore=DS_Store        <span class="cmt"># 忽略 macOS 的 .DS_Store</span></code></pre>
+  <pre><code><span class="cmt"># setup.sh — 就是一行</span>
+<span class="k">stow</span> .</code></pre>
+  <p>執行 <code>stow .</code> 後，例如 <code>tmux/tmux.conf</code> 會變成 <code>~/.config/tmux/tmux.conf</code> 的來源。修改 repo 裡的檔案 = 直接修改生效中的設定（因為是連結，不是複製）。</p>
+
+  <div class="info note">
+    <div class="t">💡 為什麼用 Stow？</div>
+    設定檔留在 git repo 內、集中管理、可追蹤歷史；同時系統仍然在 <code>~/.config</code> 找得到它們。換新電腦時只要 <code>git clone</code> + <code>stow .</code> 就還原整個環境。
+  </div>
+  <div class="tip note">
+    <div class="t">🔎 例外：Zsh</div>
+    <code>zshrc/.zshrc</code> 例外——它被連到 <code>~/.zshrc</code> 而不是 <code>~/.config/</code>，因為 zsh 預設在家目錄讀設定。
+  </div>
+</section>
+
+<!-- WARNING -->
+<section id="warning">
+  <h2><span class="ico">⚠️</span>重要注意事項（務必先讀）</h2>
+  <p class="sub">CLAUDE.md 的關鍵約定</p>
+  <div class="warn note">
+    <div class="t">🚫 這個 repo 是「參考用」，不要直接套到本機</div>
+    <p style="margin-bottom:10px">根據專案的 <code>CLAUDE.md</code>，<code>~/code/oss/dotfiles/</code> 只作<strong>版本控管參考</strong>。真正套用到本機的 dotfiles 在 <code>/Users/jason/code/personal/dotfiles</code>：</p>
+    <pre style="margin-bottom:0"><code><span class="k">cd</span> /Users/jason/code/personal/dotfiles <span class="k">&&</span> ./setup.sh</code></pre>
+  </div>
+  <div class="warn note">
+    <div class="t">🧩 設定內含 <code>/Users/omerxx/</code> 的硬寫路徑</div>
+    這套設定 fork 自 omerxx 的 dotfiles，許多檔案（<code>.zshrc</code>、<code>sketchybar</code>、<code>hammerspoon</code>、<code>nix-darwin</code>）仍保留原作者的<strong>絕對路徑與使用者名稱</strong>。若要在自己機器上啟用，需要把 <code>omerxx</code> / <code>omer</code> 換成自己的使用者名稱，否則 <code>GOPATH</code>、plugin 路徑、home-manager 使用者等會失效。
+  </div>
+</section>
+
+<!-- ZSH -->
+<section id="zsh">
+  <h2><span class="ico">🐚</span>Zsh — <code>zshrc/.zshrc</code></h2>
+  <p class="sub">主 shell 設定：補全、alias、按鍵、工具初始化</p>
+  <p>這是整個環境的入口。它不用 oh-my-zsh 框架，而是手動組合各個現代 CLI 工具。重點分區如下。</p>
+
+  <h3>補全與 Vi 模式</h3>
+  <pre><code><span class="k">setopt</span> prompt_subst              <span class="cmt"># 每次顯示提示字元都重新求值</span>
+<span class="k">autoload</span> -Uz compinit && compinit  <span class="cmt"># 啟用補全系統</span>
+<span class="k">source</span> &lt;(kubectl completion zsh)   <span class="cmt"># kubectl 補全</span>
+
+bindkey jj vi-cmd-mode              <span class="cmt"># 連按 jj 進入 Vi 一般模式</span></code></pre>
+
+  <h3>zsh-autosuggestions 按鍵</h3>
+  <table class="kbdtable">
+    <tr><th>按鍵</th><th>行為</th></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>w</kbd></td><td>接受建議並<strong>立即執行</strong> (autosuggest-execute)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>e</kbd></td><td>接受整段建議 (autosuggest-accept)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>u</kbd></td><td>開關建議顯示 (toggle)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>k</kbd> / <kbd>Ctrl</kbd>+<kbd>j</kbd></td><td>在歷史中上/下移動</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>向前跳一個字 (vi-forward-word)</td></tr>
+  </table>
+
+  <h3>Alias 分類速查</h3>
+  <table>
+    <tr><th>類別</th><th>Alias</th><th>對應</th></tr>
+    <tr><td>核心替換</td><td><code>cat</code> → <code>bat</code>, <code>la</code> → <code>tree</code></td><td>用現代工具取代預設指令</td></tr>
+    <tr><td>Eza</td><td><code>l</code>, <code>lt</code>, <code>ltree</code></td><td>帶圖示 / git 狀態 / tree 檢視的 <code>ls</code></td></tr>
+    <tr><td>Git</td><td><code>gc</code>, <code>gca</code>, <code>gp</code>, <code>gst</code>, <code>glog</code>, <code>ga</code>…</td><td>commit/push/status；<code>glog</code> 是漂亮的圖形化 log</td></tr>
+    <tr><td>Docker</td><td><code>dco</code>, <code>dps</code>, <code>dx</code></td><td>compose / ps / exec -it</td></tr>
+    <tr><td>Kubernetes</td><td><code>k</code>, <code>kg</code>, <code>kl</code>, <code>ke</code>, <code>kns</code></td><td>kubectl 全家桶</td></tr>
+    <tr><td>目錄跳躍</td><td><code>..</code>, <code>...</code>, <code>....</code></td><td>往上跳 1/2/3 層</td></tr>
+    <tr><td>資安工具</td><td><code>gobust</code>, <code>fuzz</code>, <code>nm</code>(nmap)</td><td>滲透測試工具捷徑</td></tr>
+  </table>
+
+  <h3>自訂函式（導航神器）</h3>
+  <pre><code><span class="fn">cx</span>()  { cd "$@" && l; }                              <span class="cmt"># cd 後自動列出檔案</span>
+<span class="fn">fcd</span>() { cd "$(find . -type d | fzf)" && l; }         <span class="cmt"># fzf 選目錄後 cd</span>
+<span class="fn">f</span>()   { find . -type f | fzf | pbcopy; }             <span class="cmt"># fzf 選檔並複製路徑</span>
+<span class="fn">fv</span>()  { nvim "$(find . -type f | fzf)"; }            <span class="cmt"># fzf 選檔用 nvim 開啟</span>
+<span class="fn">ranger</span>() { ... }   <span class="cmt"># 用 ranger 檔案總管瀏覽後，離開時停在該目錄（rr 為別名）</span></code></pre>
+
+  <h3>工具初始化（檔案結尾）</h3>
+  <pre><code><span class="k">eval</span> "$(starship init zsh)"   <span class="cmt"># 提示字元</span>
+<span class="k">eval</span> "$(zoxide init zsh)"     <span class="cmt"># 智慧 cd（z 指令）</span>
+<span class="k">eval</span> "$(atuin init zsh)"      <span class="cmt"># 神級歷史紀錄</span>
+<span class="k">eval</span> "$(direnv hook zsh)"     <span class="cmt"># 依目錄自動載入環境變數</span>
+<span class="k">export</span> FZF_DEFAULT_COMMAND=<span class="s">'fd --type f --hidden --follow'</span></code></pre>
+  <div class="warn note">
+    <div class="t">⚠️ 硬寫路徑</div>
+    <code>GOPATH='/Users/omerxx/go'</code>、<code>v</code> alias 指向 <code>/Users/omerxx/.nix-profile/bin/nvim</code>、<code>XDG_CONFIG_HOME</code> 也指向 omerxx。自用需替換。
+  </div>
+</section>
+
+<!-- STARSHIP -->
+<section id="starship">
+  <h2><span class="ico">🚀</span>Starship — <code>starship/starship.toml</code></h2>
+  <p class="sub">跨 shell 的提示字元引擎</p>
+  <p>採用「極簡左側 + 資訊全塞右側」的佈局，配色是完整的 Catppuccin Mocha 調色盤。</p>
+  <pre><code>add_newline = <span class="k">false</span>
+format = <span class="s">"""$directory$character"""</span>       <span class="cmt"># 左側只顯示目錄 + 提示符號</span>
+right_format = <span class="s">"""$all"""</span>                  <span class="cmt"># git / 語言 / 雲端等全部靠右</span>
+palette = <span class="s">"catppuccin_mocha"</span>
+command_timeout = 1000</code></pre>
+  <ul>
+    <li><strong>character</strong>：成功時綠色 <code>➜</code>，Vi 一般模式顯示 <code>[N] &gt;&gt;&gt;</code>。</li>
+    <li><strong>aws</strong>：顯示 profile 與 region（藍色粗體）。</li>
+    <li><strong>golang</strong>：只顯示一個 Go 圖示 <code></code>（青色）。</li>
+    <li><strong>kubernetes / docker_context</strong>：預設<strong>停用</strong>（<code>disabled = true</code>）。</li>
+    <li><strong>directory.substitutions</strong>：把長路徑縮寫成短別名。</li>
+  </ul>
+</section>
+
+<!-- ATUIN -->
+<section id="atuin">
+  <h2><span class="ico">📜</span>Atuin — <code>atuin/config.toml</code></h2>
+  <p class="sub">用 SQLite 取代 shell 歷史，支援模糊搜尋與跨機同步</p>
+  <p>Atuin 接管 <kbd>Ctrl</kbd>+<kbd>R</kbd> 的歷史搜尋，把所有指令存進資料庫並可加密同步。這個設定檔幾乎全用預設值（註解狀態），只覆寫了三項：</p>
+  <table>
+    <tr><th>設定</th><th>值</th><th>意義</th></tr>
+    <tr><td><code>style</code></td><td><code>compact</code></td><td>精簡 UI（不佔滿全螢幕）</td></tr>
+    <tr><td><code>enter_accept</code></td><td><code>true</code></td><td>按 Enter 直接執行選中指令（Tab 則回到編輯）</td></tr>
+    <tr><td><code>[sync] records</code></td><td><code>true</code></td><td>啟用 sync v2 同步協定</td></tr>
+  </table>
+  <div class="tip note">
+    <div class="t">🔐 內建安全防護</div>
+    <code>secrets_filter</code> 預設開啟：AWS key、GitHub PAT、Slack token、Stripe key 等會被自動排除，不寫入歷史。
+  </div>
+</section>
+
+<!-- TELEVISION -->
+<section id="television">
+  <h2><span class="ico">📺</span>Television — <code>television/</code></h2>
+  <p class="sub">config.toml + cable/*.toml（80+ 個「頻道」）</p>
+  <p>Television（<code>tv</code>）是一個超快的通用模糊搜尋器。它的核心概念是「<strong>頻道 (channel)</strong>」——每個頻道定義「資料來源指令 + 預覽方式」。這套設定內建了 80 幾個頻道，涵蓋 git、docker、k8s、aws、npm、cargo 等。</p>
+
+  <h3>主設定 config.toml</h3>
+  <pre><code>default_channel = <span class="s">"files"</span>
+theme = <span class="s">"catppuccin"</span>
+[ui] orientation = <span class="s">"landscape"</span>       <span class="cmt"># 橫向佈局</span>
+[ui.preview_panel] size = 65             <span class="cmt"># 預覽面板佔 65%</span></code></pre>
+
+  <h3>Shell 整合：智慧觸發</h3>
+  <p>最強大的地方是 <code>channel_triggers</code>——依你輸入的指令，<kbd>Ctrl</kbd>+<kbd>T</kbd> 會自動叫出對的頻道：</p>
+  <table>
+    <tr><th>你輸入…</th><th>按 Ctrl+T 觸發</th></tr>
+    <tr><td><code>git checkout</code> / <code>git branch</code></td><td>git-branch 頻道</td></tr>
+    <tr><td><code>cd</code> / <code>ls</code> / <code>z</code></td><td>dirs 頻道</td></tr>
+    <tr><td><code>docker run</code></td><td>docker-images 頻道</td></tr>
+    <tr><td><code>nvim</code> / <code>code</code> / <code>git clone</code></td><td>git-repos 頻道</td></tr>
+    <tr><td>其他所有指令</td><td>files（fallback）</td></tr>
+  </table>
+  <p><kbd>Ctrl</kbd>+<kbd>R</kbd> 則觸發 command_history 頻道。頻道檔案範例（<code>channels.toml</code>）用 <code>tv list-channels</code> 當來源，讓你能用 tv 來搜尋 tv 的頻道。</p>
+</section>
+
+<!-- NUSHELL -->
+<section id="nushell">
+  <h2><span class="ico">🐟</span>Nushell — <code>nushell/config.nu · env.nu</code></h2>
+  <p class="sub">結構化資料 shell（備用選項）</p>
+  <p>Nushell 把管線的資料視為<strong>結構化表格</strong>而非純文字。這裡的設定主要是主題與配色（同樣走深色系），提供給想嘗試 nu 的情境。它也被列在 nix-darwin 的系統套件中（搭配 <code>carapace</code> 補全）。</p>
+</section>
+
+<!-- GHOSTTY -->
+<section id="ghostty">
+  <h2><span class="ico">👻</span>Ghostty — <code>ghostty/config</code></h2>
+  <p class="sub">主力終端機（GPU 加速，含太空 shader）</p>
+  <pre><code>font-size = 19
+background-blur-radius = 20         <span class="cmt"># 背景毛玻璃模糊</span>
+mouse-hide-while-typing = <span class="k">true</span>     <span class="cmt"># 打字時隱藏滑鼠</span>
+window-decoration = <span class="k">false</span>          <span class="cmt"># 無標題列（極簡）</span>
+macos-option-as-alt = <span class="k">true</span>          <span class="cmt"># Option 當作 Alt 鍵</span></code></pre>
+  <p>另外 <code>ghostty/shaders/space.glsl</code> 是一個自訂的 GLSL 太空背景著色器（最近才加入，見 git log）。<code>ps.json</code> 則是除錯用的行程快照，非設定。</p>
+</section>
+
+<!-- WEZTERM -->
+<section id="wezterm">
+  <h2><span class="ico">🖥️</span>WezTerm — <code>wezterm/wezterm.lua</code></h2>
+  <p class="sub">備用終端機（Lua 設定）</p>
+  <pre><code>color_scheme = <span class="s">'Catppuccin Mocha'</span>
+font = wezterm.font(<span class="s">'JetBrains Mono'</span>), font_size = 16.0
+enable_tab_bar = <span class="k">false</span>              <span class="cmt"># 不用內建分頁（交給 tmux）</span>
+macos_window_background_blur = 30
+window_decorations = <span class="s">'RESIZE'</span></code></pre>
+  <table class="kbdtable">
+    <tr><th>按鍵</th><th>行為</th></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>q</kbd></td><td>切換全螢幕</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>'</kbd></td><td>清除 scrollback</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+左鍵</td><td>開啟游標下的連結</td></tr>
+  </table>
+  <p>在 AeroSpace（<kbd>Alt</kbd>+<kbd>w</kbd>）與 skhd 中，WezTerm 是被綁定啟動的終端機。</p>
+</section>
+
+<!-- TMUX -->
+<section id="tmux">
+  <h2><span class="ico">🔲</span>tmux — <code>tmux/tmux.conf · tmux.reset.conf</code></h2>
+  <p class="sub">主力多工器：prefix = Ctrl+A，Catppuccin 主題，眾多外掛</p>
+
+  <h3>核心設定</h3>
+  <table>
+    <tr><th>設定</th><th>值 / 意義</th></tr>
+    <tr><td>prefix</td><td><kbd>Ctrl</kbd>+<kbd>a</kbd>（取代預設 Ctrl+b）</td></tr>
+    <tr><td>base-index</td><td><code>1</code>（視窗從 1 開始編號）</td></tr>
+    <tr><td>status-position</td><td><code>top</code>（狀態列在上方）</td></tr>
+    <tr><td>mode-keys</td><td><code>vi</code>（複製模式用 Vim 按鍵）</td></tr>
+    <tr><td>mouse</td><td><code>on</code></td></tr>
+    <tr><td>history-limit</td><td><code>1,000,000</code> 行</td></tr>
+    <tr><td>renumber-windows</td><td><code>on</code>（關閉視窗後自動重編號）</td></tr>
+    <tr><td>escape-time</td><td><code>0</code>（消除 ESC 延遲，對 nvim 重要）</td></tr>
+  </table>
+
+  <h3>按鍵綁定（來自 tmux.reset.conf）</h3>
+  <p>這個檔案重新定義了一套 Vim 風格的操作，透過 <code>tmux.conf</code> 開頭 <code>source-file</code> 載入：</p>
+  <table class="kbdtable">
+    <tr><th>綁定（prefix 後）</th><th>行為</th></tr>
+    <tr><td><kbd>v</kbd> / <kbd>s</kbd></td><td>垂直 / 水平分割（沿用目前路徑）</td></tr>
+    <tr><td><kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></td><td>在 pane 間移動焦點</td></tr>
+    <tr><td><kbd>H</kbd> / <kbd>L</kbd></td><td>上一個 / 下一個視窗</td></tr>
+    <tr><td><kbd>,</kbd> <kbd>.</kbd> <kbd>-</kbd> <kbd>=</kbd></td><td>調整 pane 大小（可重複按）</td></tr>
+    <tr><td><kbd>z</kbd></td><td>放大 / 縮小 pane</td></tr>
+    <tr><td><kbd>*</kbd></td><td>同步輸入到所有 pane</td></tr>
+    <tr><td><kbd>R</kbd></td><td>重新載入設定檔</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>a</kbd></td><td>跳到上一個視窗（last-window）</td></tr>
+  </table>
+
+  <h3>外掛（TPM 管理）</h3>
+  <table>
+    <tr><th>外掛</th><th>用途</th></tr>
+    <tr><td>tmux-sensible</td><td>合理的預設值</td></tr>
+    <tr><td>tmux-resurrect + continuum</td><td>自動儲存 / 還原 session（含 nvim）</td></tr>
+    <tr><td>tmux-yank</td><td>複製到系統剪貼簿</td></tr>
+    <tr><td>tmux-thumbs</td><td>快速複製畫面上的字串 / hash</td></tr>
+    <tr><td>tmux-fzf / tmux-fzf-url</td><td>fzf 選單 / 開啟畫面中的 URL</td></tr>
+    <tr><td>catppuccin-tmux</td><td>主題（作者 fork 版，內建會議腳本）</td></tr>
+    <tr><td><strong>tmux-sessionx</strong></td><td>session 管理器，綁 <kbd>prefix</kbd>+<kbd>o</kbd>（含 zoxide 整合）</td></tr>
+    <tr><td><strong>tmux-floax</strong></td><td>浮動 pane，綁 <kbd>prefix</kbd>+<kbd>p</kbd>（80%×80%）</td></tr>
+  </table>
+  <div class="tip note">
+    <div class="t">🎯 常用組合</div>
+    <kbd>Ctrl</kbd>+<kbd>a</kbd> 然後 <kbd>o</kbd> → 開 sessionx 快速切換 session；<kbd>Ctrl</kbd>+<kbd>a</kbd> 然後 <kbd>p</kbd> → 叫出浮動終端做臨時任務。
+  </div>
+</section>
+
+<!-- ZELLIJ -->
+<section id="zellij">
+  <h2><span class="ico">🧱</span>Zellij — <code>zellij/config.kdl</code></h2>
+  <p class="sub">備用多工器（Rust 寫的，用 KDL 設定）</p>
+  <p>Zellij 是 tmux 的現代替代品。這裡設定 <code>clear-defaults=true</code> 完全重寫按鍵，改成類似 tmux/Vim 的手感：pane 模式用 <kbd>Ctrl</kbd>+<kbd>a</kbd>、resize 用 <kbd>Ctrl</kbd>+<kbd>n</kbd>、移動一律 <code>hjkl</code>。主題檔提供 Catppuccin（<code>themes/catppuccin.kdl</code>）。</p>
+</section>
+
+<!-- NVIM -->
+<section id="nvim">
+  <h2><span class="ico">✏️</span>Neovim — <code>nvim/</code>（LazyVim 架構）</h2>
+  <p class="sub">init.lua → lua/config/lazy.lua → lua/plugins/</p>
+  <p>建立在 <a class="ext" href="https://www.lazyvim.org/">LazyVim</a> 之上——一套預先組好的 Neovim 發行版。啟動流程：<code>init.lua</code> 只做一件事 <code>require("config.lazy")</code>，接著由 lazy.nvim 載入 LazyVim 核心 + <code>lua/plugins/</code> 裡的自訂外掛。</p>
+
+  <div class="mermaid">
+flowchart LR
+  A[init.lua] --> B[config/lazy.lua<br/>bootstrap lazy.nvim]
+  B --> C[LazyVim 核心外掛]
+  B --> D[lua/plugins/*<br/>自訂 & 覆寫]
+  B --> E[config/options.lua<br/>keymaps.lua<br/>autocmds.lua]
+  D --> D1[go.lua<br/>gopls]
+  D --> D2[conform.lua<br/>yaml 格式化]
+  D --> D3[opencode.lua<br/>AI 整合]
+  D --> D4[surround.lua<br/>mini.surround]
+</div>
+
+  <h3>基礎設定</h3>
+  <pre><code><span class="cmt">-- config/keymaps.lua：插入模式離開</span>
+vim.api.nvim_set_keymap(<span class="s">"i"</span>, <span class="s">"jj"</span>, <span class="s">"&lt;Esc&gt;"</span>, {...})
+vim.api.nvim_set_keymap(<span class="s">"i"</span>, <span class="s">"jk"</span>, <span class="s">"&lt;Esc&gt;"</span>, {...})
+
+<span class="cmt">-- config/options.lua</span>
+vim.opt.wrap = <span class="k">true</span>          <span class="cmt">-- 自動換行</span>
+vim.opt.foldmethod = <span class="s">"manual"</span></code></pre>
+
+  <h3>啟用的語言 extras（來自 lazyvim.json）</h3>
+  <p>透過 LazyVim 的 extras 機制，一行啟用整套語言支援：<code>Go</code>、<code>Docker</code>、<code>Helm</code>、<code>Terraform</code>、<code>TypeScript</code>、<code>YAML</code>、<code>JSON</code>、<code>Markdown</code>，外加 <code>harpoon2</code>、<code>mini-files</code>、<code>mini-surround</code>、DAP 除錯核心。</p>
+
+  <h3>自訂外掛</h3>
+  <table>
+    <tr><th>檔案</th><th>作用</th></tr>
+    <tr><td><code>go.lua</code></td><td>設定 gopls：staticcheck、自動 import、gofumpt 格式化、未用參數警告</td></tr>
+    <tr><td><code>conform.lua</code></td><td>YAML 改用 <code>yamlfmt</code>（K8s 友善，<code>indentless_arrays</code>）</td></tr>
+    <tr><td><code>surround.lua</code></td><td>mini.surround，自訂映射 <code>sa</code>/<code>sd</code>/<code>gsr</code> 等</td></tr>
+    <tr><td><code>opencode.lua</code></td><td>opencode.nvim AI 整合，見下方</td></tr>
+  </table>
+
+  <h3>opencode.nvim 按鍵（<code>&lt;leader&gt;o*</code>）</h3>
+  <table class="kbdtable">
+    <tr><th>按鍵</th><th>行為</th></tr>
+    <tr><td><kbd>&lt;leader&gt;</kbd> <kbd>ot</kbd></td><td>切換內嵌 opencode 視窗</td></tr>
+    <tr><td><kbd>&lt;leader&gt;</kbd> <kbd>oa</kbd></td><td>詢問游標處 / 選取範圍</td></tr>
+    <tr><td><kbd>&lt;leader&gt;</kbd> <kbd>oe</kbd></td><td>解釋這段程式碼</td></tr>
+    <tr><td><kbd>&lt;leader&gt;</kbd> <kbd>o+</kbd></td><td>把 buffer / 選取加入提示</td></tr>
+    <tr><td><kbd>&lt;leader&gt;</kbd> <kbd>on</kbd></td><td>新對話 session</td></tr>
+  </table>
+  <div class="info note">
+    <div class="t">🔒 版本鎖定</div>
+    <code>lazy-lock.json</code> 鎖定所有外掛的 commit，確保跨機器一致；<code>.neoconf.json</code> 提供 LSP 專案設定。
+  </div>
+</section>
+
+<!-- AEROSPACE -->
+<section id="aerospace">
+  <h2><span class="ico">🪟</span>AeroSpace — <code>aerospace/aerospace.toml</code></h2>
+  <p class="sub">macOS 平鋪式視窗管理器（i3 風格）</p>
+  <p>AeroSpace 用「虛擬工作區 + 平鋪」取代 macOS 原生的 Spaces。所有操作走 <kbd>Alt</kbd>（Option）鍵。</p>
+
+  <h3>視窗焦點與移動</h3>
+  <table class="kbdtable">
+    <tr><th>按鍵</th><th>行為</th></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>h/j/k/l</kbd></td><td>移動焦點（左/下/上/右）</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>h/j/k/l</kbd></td><td>移動視窗</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>1..4</kbd></td><td>切換到工作區 1–4</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>1..4</kbd></td><td>把視窗丟到工作區 1–4</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>Tab</kbd></td><td>在前後兩個工作區間切換</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>/</kbd> / <kbd>Alt</kbd>+<kbd>,</kbd></td><td>切換平鋪 / accordion 佈局</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>-/=</kbd></td><td>縮小 / 放大視窗</td></tr>
+  </table>
+
+  <h3>模式 (binding modes)</h3>
+  <ul>
+    <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>;</kbd> → <strong>service 模式</strong>：<code>esc</code> 重載設定、<code>r</code> 重置佈局、<code>backspace</code> 關掉其他所有視窗。</li>
+    <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> → <strong>apps 模式</strong>：快速開 App。</li>
+  </ul>
+
+  <h3>App 快速啟動 & 浮動規則</h3>
+  <p>直接 <kbd>Alt</kbd>+字母開 App：<code>o</code>=Obsidian、<code>s</code>=Slack、<code>w</code>=WezTerm、<code>z</code>=Zen、<code>e</code>=Final Cut、<code>b</code>=Brain.fm。此外 Finder、Safari、Telegram、Discord、Mail 等會被強制設為<strong>浮動視窗</strong>（不參與平鋪）。</p>
+
+  <h3>與 SketchyBar 整合</h3>
+  <pre><code>after-startup-command = [<span class="s">'exec-and-forget sketchybar'</span>]
+exec-on-workspace-change = [<span class="s">'/bin/bash'</span>, <span class="s">'-c'</span>,
+  <span class="s">'sketchybar --trigger aerospace_workspace_change ...'</span>]</code></pre>
+  <p>每次切換工作區都會通知 SketchyBar 更新高亮。工作區固定綁螢幕：<strong>1→內建螢幕、2→DELL U 系列、3→DELL S 系列</strong>。間距（gaps）在主螢幕特別大（外邊距 350px），營造置中視窗效果。</p>
+</section>
+
+<!-- SKETCHYBAR -->
+<section id="sketchybar">
+  <h2><span class="ico">📊</span>SketchyBar — <code>sketchybar/</code></h2>
+  <p class="sub">高度可程式化的 macOS 狀態列</p>
+  <p>SketchyBar 用 shell 腳本組裝狀態列。這套設定把 bar 放在<strong>螢幕右側</strong>（<code>position=right</code>），Catppuccin 半透明背景 + 模糊。</p>
+  <h3>檔案結構</h3>
+  <table>
+    <tr><th>檔案 / 目錄</th><th>作用</th></tr>
+    <tr><td><code>sketchybarrc</code></td><td>主入口：定義 bar 外觀、載入 colors/icons/items</td></tr>
+    <tr><td><code>colors.sh</code></td><td>Catppuccin 色票（<code>0xAARRGGBB</code> 格式）</td></tr>
+    <tr><td><code>icons.sh</code></td><td>圖示字元定義</td></tr>
+    <tr><td><code>items/</code></td><td>各元件：apple、spaces、calendar、cpu、github、aerospace</td></tr>
+    <tr><td><code>plugins/</code></td><td>元件更新腳本：aerospacer.sh、zen.sh、icon_map.sh</td></tr>
+    <tr><td><code>helper/</code></td><td>C 語言寫的高效能 helper（clock/cpu，含 makefile）</td></tr>
+  </table>
+  <h3>AeroSpace 工作區指示器</h3>
+  <pre><code><span class="cmt"># items/aerospace.sh：為每個工作區建立一個項目</span>
+<span class="k">for</span> sid <span class="k">in</span> $(aerospace list-workspaces --all); <span class="k">do</span>
+  sketchybar --add item space."$sid" left \
+    --subscribe space."$sid" aerospace_workspace_change \
+    click_script=<span class="s">"aerospace workspace $sid"</span> ...   <span class="cmt"># 點擊即切換</span></code></pre>
+  <p>搭配 <code>plugins/aerospacer.sh</code>：收到 AeroSpace 的事件後，判斷哪個是當前工作區並開啟背景高亮。</p>
+  <div class="warn note">
+    <div class="t">⚠️ 混用 yabai 殘留</div>
+    <code>sketchybarrc</code> 裡 <code>SPACE_CLICK_SCRIPT</code> 仍寫 <code>yabai -m space --focus</code>，且 <code>aerospace.sh</code> 的 script 路徑硬寫 <code>/Users/omerxx/dotfiles/...</code>，自用需修正。
+  </div>
+</section>
+
+<!-- SKHD -->
+<section id="skhd">
+  <h2><span class="ico">⌨️</span>skhd — <code>skhd/skhdrc</code></h2>
+  <p class="sub">簡易的全域熱鍵 daemon（App 啟動器）</p>
+  <p>skhd 提供另一組 App 啟動熱鍵（與 AeroSpace 的功能重疊，可能是舊設定）。大多用 <kbd>Alt</kbd>+字母開啟 App：<code>s</code>=Safari、<code>t</code>=Telegram、<code>o</code>=Obsidian、<code>g</code>=Ghostty、<code>q</code>=QuickTime、<code>f</code>=Final Cut。也綁了 AppleScript 腳本：<kbd>Alt</kbd>+<kbd>d</kbd> 彈出日期、<kbd>右Alt</kbd>+<kbd>n</kbd> 清除通知（腳本在 <code>skhd/applescripts/</code>）。</p>
+</section>
+
+<!-- HAMMERSPOON -->
+<section id="hammerspoon">
+  <h2><span class="ico">🔨</span>Hammerspoon — <code>hammerspoon/init.lua</code></h2>
+  <p class="sub">用 Lua 做 macOS 自動化</p>
+  <table class="kbdtable">
+    <tr><th>熱鍵</th><th>行為</th></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd></td><td>切換 AClock 大時鐘顯示</td></tr>
+    <tr><td><kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd></td><td>啟動 / 聚焦 Arc 瀏覽器</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>R</kbd></td><td>重新載入 Hammerspoon 設定</td></tr>
+  </table>
+  <p>載入了幾個 Spoon（Hammerspoon 的外掛）：<code>AClock</code>（時鐘）、<code>GoMaCal</code>（Google 行事曆選單列整合，路徑硬寫 omerxx）。檔案下半部有大量註解掉的實驗性程式碼（QuickTime 錄影自動化等）。</p>
+</section>
+
+<!-- KARABINER -->
+<section id="karabiner">
+  <h2><span class="ico">🎹</span>Karabiner-Elements — <code>karabiner/karabiner.json</code></h2>
+  <p class="sub">底層鍵位重映射引擎</p>
+  <p>Karabiner 在最底層改寫鍵盤事件。這裡最實用的兩條規則，讓你不用移到方向鍵區就能用箭頭：</p>
+  <table class="kbdtable">
+    <tr><th>組合</th><th>對應</th></tr>
+    <tr><td><kbd>右Cmd</kbd>+<kbd>h/j/k/l</kbd></td><td>← ↓ ↑ →（方向鍵）</td></tr>
+    <tr><td><kbd>左Ctrl</kbd>+<kbd>h/j/k/l</kbd></td><td>← ↓ ↑ →（Vim 風格方向鍵）</td></tr>
+  </table>
+  <p>參數區設定了同時按鍵閾值（50ms）、長按判定（500ms）等。<code>karabiner-guide.html</code> 是這個設定的專屬詳解文件。</p>
+</section>
+
+<!-- KINDAVIM -->
+<section id="kindavim">
+  <h2><span class="ico">🅥</span>kindaVim — <code>kindavim/*.plist</code></h2>
+  <p class="sub">讓整個 macOS 都能用 Vim 按鍵</p>
+  <p>kindaVim 把 Vim 的動作帶到<strong>所有</strong> macOS App 的文字框中。這是它的偏好設定 plist（二進位格式）。從中可讀出：進入一般模式的按鍵是 <code>jk</code>、對 WezTerm 與 Obsidian 採用混合模式、忽略 Raycast。</p>
+</section>
+
+<!-- NIX -->
+<section id="nix">
+  <h2><span class="ico">❄️</span>Nix-darwin — <code>nix-darwin/ · nix/nix.conf</code></h2>
+  <p class="sub">宣告式管理整個 macOS 系統</p>
+  <p>Nix-darwin 讓你用一個 <code>flake.nix</code> 宣告整台機器的狀態：系統套件、macOS 偏好、Homebrew、以及透過 home-manager 管理使用者環境。</p>
+  <h3>flake.nix 重點</h3>
+  <table>
+    <tr><th>設定</th><th>內容</th></tr>
+    <tr><td>nixpkgs</td><td><code>nixpkgs-unstable</code> 分支</td></tr>
+    <tr><td>平台</td><td><code>aarch64-darwin</code>（Apple Silicon）</td></tr>
+    <tr><td>系統套件</td><td>vim、direnv、sshs、glow、nushell、carapace</td></tr>
+    <tr><td>Touch ID sudo</td><td><code>security.pam.enableSudoTouchIdAuth = true</code></td></tr>
+    <tr><td>Homebrew</td><td>casks: wireshark、google-chrome；brews: imagemagick</td></tr>
+    <tr><td>macOS 預設</td><td>dock 自動隱藏、顯示副檔名、截圖存到 ~/Pictures/screenshots</td></tr>
+  </table>
+  <pre><code><span class="cmt"># nix/nix.conf — 啟用現代功能</span>
+experimental-features = nix-command flakes
+build-users-group = nixbld</code></pre>
+  <h3>套用指令</h3>
+  <pre><code>darwin-rebuild switch --flake ~/dotfiles/nix-darwin#Omers-MacBook-Pro
+home-manager switch   <span class="cmt"># 只更新 home-manager</span></code></pre>
+  <div class="info note">
+    <div class="t">📌 為何 home.nix 幾乎全註解？</div>
+    <code>home.nix</code> 裡管理 dotfiles 的 <code>home.file</code> 全部被註解掉——因為<strong>這個 repo 選擇用 Stow 而非 home-manager 管理 dotfiles</strong>。home-manager 在這裡只負責 zsh 的 PATH 與 Nix daemon 初始化。設定中的主機名 <code>Omers-MacBook-Pro</code> 與使用者 <code>omerxx</code> 為原作者資訊。
+  </div>
+</section>
+
+<!-- OPENCODE -->
+<section id="opencode">
+  <h2><span class="ico">🤖</span>opencode — <code>opencode/</code></h2>
+  <p class="sub">終端機內的 AI 編程代理</p>
+  <p>opencode 是一個 TUI 型的 AI coding 工具。這套設定含模型選擇、按鍵、自訂 agent、指令與 skill。</p>
+  <h3>核心設定</h3>
+  <pre><code><span class="cmt">// opencode.json</span>
+<span class="fn">"model"</span>: <span class="s">"opencode/kimi-k2.5"</span>,   <span class="cmt">// 使用 Kimi K2.5 模型</span>
+<span class="fn">"autoupdate"</span>: <span class="k">true</span></code></pre>
+  <p><code>tui.json</code> 定義了非常完整的按鍵表，leader 鍵是 <kbd>Ctrl</kbd>+<kbd>o</kbd>（與 nvim 的 <code>&lt;leader&gt;o</code> AI 前綴呼應）。</p>
+  <h3>自訂 Agents（<code>agent/*.md</code>）</h3>
+  <table>
+    <tr><th>Agent</th><th>角色</th></tr>
+    <tr><td>tech-lead</td><td>總協調者，拆解需求並分派給專家（用 Claude Sonnet）</td></tr>
+    <tr><td>requirements-clarifier</td><td>把模糊需求轉成明確規格 / 驗收條件</td></tr>
+    <tr><td>architect-designer</td><td>高階技術設計與架構決策</td></tr>
+    <tr><td>implementation-specialist</td><td>依既有模式精準實作</td></tr>
+    <tr><td>test-automation-engineer</td><td>撰寫並執行測試、診斷失敗</td></tr>
+    <tr><td>big-pickle-simple-tasks</td><td>把大專案拆成可執行的小步驟</td></tr>
+  </table>
+  <h3>指令與 Skill</h3>
+  <ul>
+    <li><code>command/build.md</code>、<code>command/scan.md</code>：<code>/build</code> 建置、<code>/scan</code> 用 Snyk 掃描漏洞。</li>
+    <li><code>skills/ship/SKILL.md</code>：一個「ship it」工作流——sanity check → rebase → 分階段 commit → push → 開 PR → 觸發 <code>/oc</code> 自動 review。內含明確安全規則（絕不 force-push main、絕不 commit 密鑰）。</li>
+  </ul>
+</section>
+
+<!-- GHDASH -->
+<section id="ghdash">
+  <h2><span class="ico">🐙</span>gh-dash — <code>gh-dash/config.yml</code></h2>
+  <p class="sub">GitHub PR / Issue 的終端機儀表板</p>
+  <p>gh CLI 的擴充，把 PR、Issue、通知整理成分區儀表板。分區用 GitHub 搜尋語法過濾：「My Pull Requests」、「Needs My Review」（<code>review-requested:@me</code>）、「Involved」等。</p>
+  <table class="kbdtable">
+    <tr><th>按鍵</th><th>行為</th></tr>
+    <tr><td><kbd>g</kbd></td><td>在該 repo 開 lazygit</td></tr>
+    <tr><td><kbd>C</kbd>（PR 上）</td><td>開新 tmux 視窗，用 worktree + opencode 對該 PR 做 code review</td></tr>
+  </table>
+  <p>主題用的是 Monokai Pro 風格色票；<code>pager.diff</code> 設為 <code>diffnav</code>（更好的 diff 瀏覽器）。</p>
+</section>
+
+<!-- SSH -->
+<section id="ssh">
+  <h2><span class="ico">🔐</span>SSH — <code>ssh/ssh-config</code></h2>
+  <p class="sub">連線的全域預設值</p>
+  <pre><code>Host *
+  ForwardAgent yes            <span class="cmt"># 轉發 SSH agent（可跳板連線）</span>
+  ServerAliveInterval 15      <span class="cmt"># 每 15s 送 keepalive</span>
+  ConnectTimeout 20
+  AddressFamily inet          <span class="cmt"># 強制 IPv4</span>
+
+Host bastion
+  User ec2-user
+  Hostname bastion.domain.com <span class="cmt"># 範例跳板機（需自行替換）</span>
+  IdentityFile ~/.ssh/id_rsa</code></pre>
+  <div class="warn note">
+    <div class="t">⚠️ 弱 MAC 演算法</div>
+    設定中有 <code>MACs hmac-md5,hmac-sha1</code>——這兩者已不安全，通常只為相容老舊裝置保留。連接現代伺服器建議移除此行。
+  </div>
+</section>
+
+<div class="foot">
+  <p>📎 這份文件說明的是位於 <code>~/code/oss/dotfiles</code> 的「參考用」設定。實際套用到本機請使用 <code>~/code/personal/dotfiles</code>。設定中多處保留原作者 <code>omerxx</code> 的路徑，移植時務必替換。</p>
+  <p style="margin-top:8px">由 Claude Code 依據實際設定檔內容整理生成 · Catppuccin Mocha 主題</p>
+</div>
+
+</main>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad:true,
+    theme:'base',
+    themeVariables:{
+      background:'#181825', primaryColor:'#313244', primaryTextColor:'#cdd6f4',
+      primaryBorderColor:'#585b70', lineColor:'#7f849c', secondaryColor:'#45475a',
+      tertiaryColor:'#1e1e2e', fontSize:'14px',
+      clusterBkg:'#1e1e2e', clusterBorder:'#45475a'
+    }
+  });
+</script>
+<a href="../" id="back-home-btn" style="position:fixed;top:16px;left:16px;z-index:9999;display:flex;align-items:center;gap:6px;padding:8px 14px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#aaa;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;" onmouseover="this.style.borderColor='#555';this.style.color='#fff'" onmouseout="this.style.borderColor='#333';this.style.color='#aaa'">← Home</a>
+</body>
+</html>
